@@ -1,15 +1,18 @@
 import { App, SuggestModal } from "obsidian";
+import { translateConfidence, Translator } from "./i18n";
 import { GeoPlace } from "./types";
 
 export class PlaceListModal extends SuggestModal<GeoPlace> {
   private places: GeoPlace[];
   private onChoose: (place: GeoPlace) => void;
+  private t: Translator;
 
-  constructor(app: App, places: GeoPlace[], onChoose: (place: GeoPlace) => void) {
+  constructor(app: App, places: GeoPlace[], t: Translator, onChoose: (place: GeoPlace) => void) {
     super(app);
     this.places = places;
+    this.t = t;
     this.onChoose = onChoose;
-    this.setPlaceholder("Choose a nearby place...");
+    this.setPlaceholder(t("placeholderNearbyChoice"));
   }
 
   getSuggestions(query: string): GeoPlace[] {
@@ -26,7 +29,7 @@ export class PlaceListModal extends SuggestModal<GeoPlace> {
   renderSuggestion(place: GeoPlace, el: HTMLElement): void {
     el.createEl("div", { text: place.name });
     el.createEl("div", {
-      text: formatSubtitle(place),
+      text: formatSubtitle(place, this.t),
       cls: "geo-capture-place-subtitle",
     });
   }
@@ -36,7 +39,7 @@ export class PlaceListModal extends SuggestModal<GeoPlace> {
   }
 }
 
-export function formatSubtitle(place: GeoPlace): string {
+export function formatSubtitle(place: GeoPlace, t: Translator): string {
   const parts = [];
 
   if (place.address) {
@@ -48,7 +51,7 @@ export function formatSubtitle(place: GeoPlace): string {
   }
 
   if (place.confidence) {
-    parts.push(place.confidence);
+    parts.push(translateConfidence(t, place.confidence));
   }
 
   return parts.join(" · ") || `${place.lat}, ${place.lon}`;

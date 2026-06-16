@@ -1,10 +1,12 @@
 import { buildMapsUrl } from "./maps";
+import { createTranslator } from "./i18n";
 import { GeoCaptureSettings, GeoPlace, InsertFormat } from "./types";
 
 export function formatPlace(place: GeoPlace, settings: GeoCaptureSettings, format?: InsertFormat): string {
+  const t = createTranslator(settings.uiLanguage);
   const selectedFormat = format ?? settings.defaultFormat;
   const mapsUrl = buildMapsUrl(place, settings.mapsLinkProvider);
-  const address = place.address || "Unknown address";
+  const address = place.address || t("unknownAddress");
   const lat = trimCoordinate(place.lat);
   const lon = trimCoordinate(place.lon);
 

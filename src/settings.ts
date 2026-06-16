@@ -1,8 +1,10 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
+import { createTranslator } from "./i18n";
 import GeoCapturePlugin from "./main";
-import { GeoCaptureSettings, InsertFormat, MapsLinkProvider, PlaceProviderKind } from "./types";
+import { GeoCaptureSettings, InsertFormat, MapsLinkProvider, PlaceProviderKind, UiLanguage } from "./types";
 
 export const DEFAULT_SETTINGS: GeoCaptureSettings = {
+  uiLanguage: "system",
   defaultFormat: "callout",
   mapsLinkProvider: "google",
   placeProvider: "nominatim",
@@ -10,7 +12,7 @@ export const DEFAULT_SETTINGS: GeoCaptureSettings = {
   nearbyRadiusMeters: 500,
   template:
     "- [{name}]({mapsUrl})\n  - Coordinates: `{lat}, {lon}`\n  - Address: {address}",
-  searchLanguage: "zh-TW",
+  searchLanguage: "",
 };
 
 export class GeoCaptureSettingTab extends PluginSettingTab {
@@ -23,18 +25,38 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
 
   display(): void {
     const { containerEl } = this;
+    const t = createTranslator(this.plugin.settings.uiLanguage);
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Geo Capture" });
+    containerEl.createEl("h2", { text: t("settingsTitle") });
 
     new Setting(containerEl)
-      .setName("Place search provider")
-      .setDesc("Nominatim is free. Google Places enables nearby place capture when an API key is configured.")
+      .setName(t("settingUiLanguageName"))
+      .setDesc(t("settingUiLanguageDesc"))
       .addDropdown((dropdown) =>
         dropdown
           .addOptions({
-            nominatim: "OpenStreetMap Nominatim",
-            google: "Google Places",
+            system: t("languageSystem"),
+            en: t("languageEnglish"),
+            "zh-TW": t("languageZhTw"),
+            "zh-CN": t("languageZhCn"),
+          })
+          .setValue(this.plugin.settings.uiLanguage)
+          .onChange(async (value) => {
+            this.plugin.settings.uiLanguage = value as UiLanguage;
+            await this.plugin.saveSettings();
+            this.display();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName(t("settingPlaceProviderName"))
+      .setDesc(t("settingPlaceProviderDesc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({
+            nominatim: t("providerNominatim"),
+            google: t("providerGoogle"),
           })
           .setValue(this.plugin.settings.placeProvider)
           .onChange(async (value) => {
@@ -44,8 +66,8 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Google Places API key")
-      .setDesc("Required only when using Google Places. Enable Places API (New) in Google Cloud.")
+      .setName(t("settingGoogleApiKeyName"))
+      .setDesc(t("settingGoogleApiKeyDesc"))
       .addText((text) => {
         text.inputEl.type = "password";
         text
@@ -58,8 +80,8 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("Nearby search radius")
-      .setDesc("Radius in meters for current-location place suggestions.")
+      .setName(t("settingNearbyRadiusName"))
+      .setDesc(t("settingNearbyRadiusDesc"))
       .addSlider((slider) =>
         slider
           .setLimits(100, 2000, 100)
@@ -72,15 +94,15 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Default insert format")
-      .setDesc("Choose the Markdown shape used by capture commands.")
+      .setName(t("settingDefaultFormatName"))
+      .setDesc(t("settingDefaultFormatDesc"))
       .addDropdown((dropdown) =>
         dropdown
           .addOptions({
-            compact: "Compact line",
-            callout: "Callout",
-            "table-row": "Table row",
-            template: "Custom template",
+            compact: t("formatCompact"),
+            callout: t("formatCallout"),
+            "table-row": t("formatTableRow"),
+            template: t("formatTemplate"),
           })
           .setValue(this.plugin.settings.defaultFormat)
           .onChange(async (value) => {
@@ -90,8 +112,8 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Maps link provider")
-      .setDesc("Used for generated map links in inserted snippets.")
+      .setName(t("settingMapsLinkProviderName"))
+      .setDesc(t("settingMapsLinkProviderDesc"))
       .addDropdown((dropdown) =>
         dropdown
           .addOptions({
@@ -107,8 +129,8 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Search language")
-      .setDesc("Preferred language sent to the search provider.")
+      .setName(t("settingSearchLanguageName"))
+      .setDesc(t("settingSearchLanguageDesc"))
       .addText((text) =>
         text
           .setPlaceholder("zh-TW")
@@ -120,8 +142,8 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Custom template")
-      .setDesc("Available tokens: {name}, {address}, {lat}, {lon}, {mapsUrl}, {sourceUrl}.")
+      .setName(t("settingCustomTemplateName"))
+      .setDesc(t("settingCustomTemplateDesc"))
       .addTextArea((text) => {
         text.inputEl.rows = 5;
         text

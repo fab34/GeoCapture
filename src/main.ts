@@ -3,6 +3,7 @@ import { readPlaceFromClipboard } from "./clipboard";
 import { readExifGps } from "./exif";
 import { formatPlace } from "./format";
 import { findNearestImageFile, isSupportedExifImage } from "./images";
+import { createTranslator, getProviderLanguage, Translator } from "./i18n";
 import { getCurrentPosition } from "./location";
 import { PlaceListModal } from "./placeListModal";
 import { GooglePlacesProvider } from "./providers/googlePlaces";
@@ -19,7 +20,7 @@ export default class GeoCapturePlugin extends Plugin {
 
     this.addCommand({
       id: "insert-current-location",
-      name: "Insert current location",
+      name: this.t("commandInsertCurrentLocation"),
       editorCallback: async (editor) => {
         await this.captureCurrentLocation(editor);
       },
@@ -27,7 +28,7 @@ export default class GeoCapturePlugin extends Plugin {
 
     this.addCommand({
       id: "capture-nearby-place",
-      name: "Capture nearby place",
+      name: this.t("commandCaptureNearbyPlace"),
       editorCallback: async (editor) => {
         await this.captureNearbyPlace(editor);
       },
@@ -35,7 +36,7 @@ export default class GeoCapturePlugin extends Plugin {
 
     this.addCommand({
       id: "search-place-and-insert",
-      name: "Quick insert place",
+      name: this.t("commandQuickInsertPlace"),
       editorCallback: (editor) => {
         this.openManualPlaceSearch(editor);
       },
@@ -43,7 +44,7 @@ export default class GeoCapturePlugin extends Plugin {
 
     this.addCommand({
       id: "suggest-place-from-image",
-      name: "Suggest place from nearest image",
+      name: this.t("commandSuggestPlaceFromImage"),
       editorCallback: async (editor) => {
         await this.capturePlaceFromNearestImage(editor);
       },
@@ -51,7 +52,7 @@ export default class GeoCapturePlugin extends Plugin {
 
     this.addCommand({
       id: "insert-location-from-clipboard",
-      name: "Insert location from clipboard",
+      name: this.t("commandInsertLocationFromClipboard"),
       editorCallback: async (editor) => {
         await this.captureClipboardLocation(editor);
       },
@@ -70,12 +71,12 @@ export default class GeoCapturePlugin extends Plugin {
 
   private async captureCurrentLocation(editor: Editor): Promise<void> {
     try {
-      new Notice("Geo Capture: getting current location...");
-      const place = await getCurrentPosition();
+      new Notice(this.t("noticeGettingCurrentLocation"));
+      const place = await getCurrentPosition(this.getCurrentPositionLabels());
       await this.insertPlace(editor, place);
     } catch (error) {
       console.error(error);
-      new Notice(`Geo Capture: ${error instanceof Error ? error.message : "unable to get location."}`);
+      new Notice(error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeUnableToGetLocation"));
     }
   }
 
@@ -84,33 +85,33 @@ export default class GeoCapturePlugin extends Plugin {
       const provider = this.getNearbyProvider();
 
       if (!provider) {
-        new Notice("Geo Capture: configure Google Places API key to capture nearby places.");
+        new Notice(this.t("noticeConfigureGooglePlaces"));
         await this.captureCurrentLocation(editor);
         return;
       }
 
-      new Notice("Geo Capture: getting current location...");
-      const currentLocation = await getCurrentPosition();
+      new Notice(this.t("noticeGettingCurrentLocation"));
+      const currentLocation = await getCurrentPosition(this.getCurrentPositionLabels());
 
-      new Notice("Geo Capture: searching nearby places...");
+      new Notice(this.t("noticeSearchingNearbyPlaces"));
       const places = await provider.searchNearby(
         currentLocation,
-        this.settings.searchLanguage,
+        this.getSearchLanguage(),
         this.settings.nearbyRadiusMeters,
       );
 
       if (places.length === 0) {
-        new Notice("Geo Capture: no nearby places found. Inserting raw current location.");
+        new Notice(this.t("noticeNoNearbyPlaces"));
         await this.insertPlace(editor, currentLocation);
         return;
       }
 
-      new PlaceListModal(this.app, [currentLocation, ...places], async (place) => {
+      new PlaceListModal(this.app, [currentLocation, ...places], this.t.bind(this), async (place) => {
         await this.insertPlace(editor, place);
       }).open();
     } catch (error) {
       console.error(error);
-      new Notice(`Geo Capture: ${error instanceof Error ? error.message : "nearby capture failed."}`);
+      new Notice(error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeNearbyCaptureFailed"));
     }
   }
 
@@ -118,14 +119,14 @@ export default class GeoCapturePlugin extends Plugin {
     try {
       const place = await readPlaceFromClipboard();
       if (!place) {
-        new Notice("Geo Capture: no supported map link or coordinates found on clipboard.");
+        new Notice(this.t("noticeNoClipboardLocation"));
         return;
       }
 
       await this.insertPlace(editor, place);
     } catch (error) {
       console.error(error);
-      new Notice("Geo Capture: unable to read clipboard location.");
+      new Notice(this.t("noticeClipboardReadFailed"));
     }
   }
 
@@ -133,20 +134,20 @@ export default class GeoCapturePlugin extends Plugin {
     const activeFile = this.app.workspace.getActiveFile();
 
     if (!(activeFile instanceof TFile)) {
-      new Notice("Geo Capture: open a note with an image first.");
+      new Notice(this.t("noticeOpenNoteWithImage"));
       return;
     }
 
     const imageFile = findNearestImageFile(this.app, editor, activeFile);
 
     if (!imageFile) {
-      new Notice("Geo Capture: no local image found near the cursor. You can enter a place manually.");
+      new Notice(this.t("noticeNoLocalImage"));
       this.openManualPlaceSearch(editor);
       return;
     }
 
     if (!isSupportedExifImage(imageFile)) {
-      new Notice("Geo Capture: this image type is not supported for EXIF GPS yet. You can enter a place manually.");
+      new Notice(this.t("noticeUnsupportedImageType"));
       this.openManualPlaceSearch(editor);
       return;
     }
@@ -156,14 +157,14 @@ export default class GeoCapturePlugin extends Plugin {
       const point = readExifGps(arrayBuffer);
 
       if (!point) {
-        new Notice("Geo Capture: no GPS metadata found in this image. You can enter a place manually.");
+        new Notice(this.t("noticeNoImageGps"));
         this.openManualPlaceSearch(editor);
         return;
       }
 
       const photoLocation: GeoPlace = {
         ...point,
-        name: `Photo location: ${imageFile.basename}`,
+        name: this.t("photoLocation", { name: imageFile.basename }),
         address: imageFile.path,
         source: "image-exif",
         confidence: "gps-derived",
@@ -172,26 +173,26 @@ export default class GeoCapturePlugin extends Plugin {
       const provider = this.getNearbyProvider();
 
       if (!provider) {
-        new Notice("Geo Capture: image GPS found. Configure Google Places to see nearby place suggestions.");
-        new PlaceListModal(this.app, [photoLocation], async (place) => {
+        new Notice(this.t("noticeImageGpsFoundNoProvider"));
+        new PlaceListModal(this.app, [photoLocation], this.t.bind(this), async (place) => {
           await this.insertPlace(editor, place);
         }).open();
         return;
       }
 
-      new Notice("Geo Capture: image GPS found. Searching nearby places...");
+      new Notice(this.t("noticeImageGpsSearching"));
       const places = await provider.searchNearby(
         point,
-        this.settings.searchLanguage,
+        this.getSearchLanguage(),
         this.settings.nearbyRadiusMeters,
       );
 
-      new PlaceListModal(this.app, [photoLocation, ...places], async (place) => {
+      new PlaceListModal(this.app, [photoLocation, ...places], this.t.bind(this), async (place) => {
         await this.insertPlace(editor, place);
       }).open();
     } catch (error) {
       console.error(error);
-      new Notice("Geo Capture: unable to read image metadata. You can enter a place manually.");
+      new Notice(this.t("noticeImageMetadataFailed"));
       this.openManualPlaceSearch(editor);
     }
   }
@@ -200,7 +201,7 @@ export default class GeoCapturePlugin extends Plugin {
     const markdown = formatPlace(place, this.settings);
     editor.replaceSelection(markdown);
     this.ensureTrailingNewline(editor);
-    new Notice(`Geo Capture: inserted ${place.name}.`);
+    new Notice(this.t("noticeInsertedPlace", { name: place.name }));
   }
 
   private ensureTrailingNewline(editor: Editor): void {
@@ -228,10 +229,23 @@ export default class GeoCapturePlugin extends Plugin {
   }
 
   private openManualPlaceSearch(editor: Editor): void {
-    new PlaceSearchModal(this.app, this.getSearchProvider(), this.settings.searchLanguage, async (place) => {
+    new PlaceSearchModal(this.app, this.getSearchProvider(), this.getSearchLanguage(), this.t.bind(this), async (place) => {
       await this.insertPlace(editor, place);
     }).open();
   }
+
+  private getSearchLanguage(): string {
+    return getProviderLanguage(this.settings.uiLanguage, this.settings.searchLanguage);
+  }
+
+  private getCurrentPositionLabels(): Parameters<typeof getCurrentPosition>[0] {
+    return {
+      currentLocation: this.t("currentLocation"),
+      gpsAccuracy: (meters: number) => this.t("gpsAccuracy", { meters }),
+    };
+  }
+
+  private t: Translator = (key, values) => createTranslator(this.settings.uiLanguage)(key, values);
 }
 
 export function isMarkdownView(view: unknown): view is MarkdownView {

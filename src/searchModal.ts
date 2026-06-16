@@ -1,12 +1,14 @@
 import { App, Notice, SuggestModal } from "obsidian";
 import { parseMapText } from "./clipboard";
 import { formatSubtitle } from "./placeListModal";
+import { Translator } from "./i18n";
 import { GeoPlace, SearchProvider } from "./types";
 
 export class PlaceSearchModal extends SuggestModal<GeoPlace> {
   private provider: SearchProvider;
   private language: string;
   private onChoose: (place: GeoPlace) => void;
+  private t: Translator;
   private lastQuery = "";
   private places: GeoPlace[] = [];
 
@@ -14,13 +16,15 @@ export class PlaceSearchModal extends SuggestModal<GeoPlace> {
     app: App,
     provider: SearchProvider,
     language: string,
+    t: Translator,
     onChoose: (place: GeoPlace) => void,
   ) {
     super(app);
     this.provider = provider;
     this.language = language;
+    this.t = t;
     this.onChoose = onChoose;
-    this.setPlaceholder("Search a place, paste a map link, or type lat,lng...");
+    this.setPlaceholder(t("placeholderQuickInsert"));
   }
 
   async getSuggestions(query: string): Promise<GeoPlace[]> {
@@ -42,7 +46,7 @@ export class PlaceSearchModal extends SuggestModal<GeoPlace> {
       return this.places;
     } catch (error) {
       console.error(error);
-      new Notice("Geo Capture: place search failed.");
+      new Notice(this.t("noticePlaceSearchFailed"));
       return [];
     }
   }
@@ -50,7 +54,7 @@ export class PlaceSearchModal extends SuggestModal<GeoPlace> {
   renderSuggestion(place: GeoPlace, el: HTMLElement): void {
     el.createEl("div", { text: place.name });
     el.createEl("div", {
-      text: formatSubtitle(place),
+      text: formatSubtitle(place, this.t),
       cls: "geo-capture-place-subtitle",
     });
   }

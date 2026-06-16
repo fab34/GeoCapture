@@ -1,6 +1,11 @@
 import { GeoPlace } from "./types";
 
-export function getCurrentPosition(): Promise<GeoPlace> {
+interface CurrentPositionLabels {
+  currentLocation: string;
+  gpsAccuracy: (meters: number) => string;
+}
+
+export function getCurrentPosition(labels?: CurrentPositionLabels): Promise<GeoPlace> {
   if (!navigator.geolocation) {
     return Promise.reject(new Error("Geolocation is not available in this environment."));
   }
@@ -9,11 +14,12 @@ export function getCurrentPosition(): Promise<GeoPlace> {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         resolve({
-          name: "Current location",
+          name: labels?.currentLocation ?? "Current location",
           lat: position.coords.latitude,
           lon: position.coords.longitude,
           address: position.coords.accuracy
-            ? `GPS accuracy around ${Math.round(position.coords.accuracy)}m`
+            ? labels?.gpsAccuracy(Math.round(position.coords.accuracy)) ??
+              `GPS accuracy around ${Math.round(position.coords.accuracy)}m`
             : undefined,
           source: "device",
           confidence: "gps-derived",

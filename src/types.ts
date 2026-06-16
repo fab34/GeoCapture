@@ -4,6 +4,8 @@ export type MapsLinkProvider = "google" | "apple" | "openstreetmap";
 
 export type PlaceProviderKind = "nominatim" | "google";
 
+export type UiLanguage = "system" | "en" | "zh-TW" | "zh-CN";
+
 export type LocationConfidence =
   | "gps-derived"
   | "search-selected"
@@ -12,6 +14,7 @@ export type LocationConfidence =
   | "map-link";
 
 export interface GeoCaptureSettings {
+  uiLanguage: UiLanguage;
   defaultFormat: InsertFormat;
   mapsLinkProvider: MapsLinkProvider;
   placeProvider: PlaceProviderKind;

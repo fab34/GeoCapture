@@ -159,6 +159,26 @@ Google provider settings should include:
 - Region.
 - Search radius.
 
+## Localization Requirements
+
+The plugin UI must support localization.
+
+Initial supported display languages:
+
+- System
+- English
+- Traditional Chinese
+- Simplified Chinese
+
+Behavior:
+
+- `System` follows Obsidian's configured app language through Obsidian's public language API.
+- Unsupported languages fall back to English.
+- Chinese variants should resolve to Traditional Chinese by default, except Simplified Chinese locales such as `zh-CN` and `zh-SG`.
+- Command names are localized when the plugin loads.
+- Settings labels, descriptions, notices, modal placeholders, and confidence labels are localized.
+- The place provider search language can be manually configured; when left empty, it follows the effective UI language.
+
 ## Error Handling
 
 If geolocation permission is denied, show a clear notice and suggest using Quick Insert Place.
