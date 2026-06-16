@@ -13,6 +13,10 @@ const FIELD_MASK = [
 
 interface GooglePlacesResponse {
   places?: GooglePlace[];
+  error?: {
+    message?: string;
+    status?: string;
+  };
 }
 
 interface GooglePlace {
@@ -65,6 +69,35 @@ export class GooglePlacesProvider implements SearchProvider, NearbySearchProvide
     });
 
     return this.toPlaces(response, point, "gps-derived");
+  }
+
+  async validateApiKey(language: string): Promise<{ ok: true } | { ok: false; reason: string }> {
+    if (!this.apiKey) {
+      return { ok: false, reason: "API key is missing." };
+    }
+
+    const response = await requestUrl({
+      url: "https://places.googleapis.com/v1/places:searchText",
+      method: "POST",
+      contentType: "application/json",
+      body: JSON.stringify({
+        textQuery: "Taipei 101",
+        languageCode: language,
+        maxResultCount: 1,
+      }),
+      headers: {
+        "X-Goog-Api-Key": this.apiKey,
+        "X-Goog-FieldMask": FIELD_MASK,
+      },
+      throw: false,
+    });
+
+    if (response.status >= 200 && response.status < 300) {
+      return { ok: true };
+    }
+
+    const reason = this.describeError(response.status, response.json as GooglePlacesResponse, response.text);
+    return { ok: false, reason };
   }
 
   private async post(url: string, body: unknown): Promise<GooglePlacesResponse> {
@@ -120,5 +153,32 @@ export class GooglePlacesProvider implements SearchProvider, NearbySearchProvide
       distanceMeters: origin ? distanceMeters(origin, point) : undefined,
       confidence,
     };
+  }
+
+  private describeError(status: number, body: GooglePlacesResponse, text: string): string {
+    const statusText = body.error?.status ?? "";
+    const message = body.error?.message ?? text;
+
+    if (status === 400 || statusText === "INVALID_ARGUMENT") {
+      return "invalid API key or request parameters.";
+    }
+
+    if (status === 401 || statusText === "UNAUTHENTICATED") {
+      return "authentication failed. Check the API key.";
+    }
+
+    if (status === 403 || statusText === "PERMISSION_DENIED") {
+      return "permission denied. Check API restrictions, billing, or whether Places API (New) is enabled.";
+    }
+
+    if (status === 429 || statusText === "RESOURCE_EXHAUSTED") {
+      return "quota exceeded or rate limited.";
+    }
+
+    if (status >= 500) {
+      return "Google Places service is temporarily unavailable.";
+    }
+
+    return message || `request failed with status ${status}.`;
   }
 }

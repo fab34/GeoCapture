@@ -89,6 +89,14 @@ export default class GeoCapturePlugin extends Plugin {
     await this.saveData(this.settings);
   }
 
+  getSearchLanguage(): string {
+    return getProviderLanguage(this.settings.uiLanguage, this.settings.searchLanguage);
+  }
+
+  showNotice(key: Parameters<Translator>[0], values?: Record<string, string | number>): void {
+    new Notice(this.t(key, values));
+  }
+
   private async captureCurrentLocation(editor: Editor): Promise<void> {
     try {
       new Notice(this.t("noticeGettingCurrentLocation"));
@@ -268,10 +276,6 @@ export default class GeoCapturePlugin extends Plugin {
     new PlaceSearchModal(this.app, this.getSearchProvider(), this.getSearchLanguage(), this.t.bind(this), async (place) => {
       await this.insertPlace(editor, place);
     }).open();
-  }
-
-  private getSearchLanguage(): string {
-    return getProviderLanguage(this.settings.uiLanguage, this.settings.searchLanguage);
   }
 
   private getCurrentPositionLabels(): Parameters<typeof getCurrentPosition>[0] {

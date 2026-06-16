@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { createTranslator } from "./i18n";
 import GeoCapturePlugin from "./main";
+import { GooglePlacesProvider } from "./providers/googlePlaces";
 import {
   GeoCaptureSettings,
   ImageInsertPosition,
@@ -101,6 +102,35 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
             this.plugin.settings.googlePlacesApiKey = value.trim();
             await this.plugin.saveSettings();
           });
+      })
+      .addButton((button) => {
+        button.setButtonText(t("settingGoogleApiKeyTestButton")).onClick(async () => {
+          const apiKey = this.plugin.settings.googlePlacesApiKey.trim();
+
+          if (!apiKey) {
+            this.plugin.showNotice("noticeGoogleApiKeyMissing");
+            return;
+          }
+
+          button.setDisabled(true);
+          this.plugin.showNotice("noticeTestingGoogleApiKey");
+
+          try {
+            const provider = new GooglePlacesProvider(apiKey);
+            const result = await provider.validateApiKey(this.plugin.getSearchLanguage());
+
+            if (result.ok) {
+              this.plugin.showNotice("noticeGoogleApiKeyValid");
+            } else {
+              this.plugin.showNotice("noticeGoogleApiKeyInvalid", { reason: result.reason });
+            }
+          } catch (error) {
+            const reason = error instanceof Error ? error.message : "unknown error.";
+            this.plugin.showNotice("noticeGoogleApiKeyInvalid", { reason });
+          } finally {
+            button.setDisabled(false);
+          }
+        });
       });
 
     new Setting(containerEl)
