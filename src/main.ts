@@ -1,6 +1,8 @@
-import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
+import { Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
 import { readPlaceFromClipboard } from "./clipboard";
+import { readExifGps } from "./exif";
 import { formatPlace } from "./format";
+import { findNearestImageFile, isSupportedExifImage } from "./images";
 import { getCurrentPosition } from "./location";
 import { PlaceListModal } from "./placeListModal";
 import { GooglePlacesProvider } from "./providers/googlePlaces";
@@ -35,9 +37,15 @@ export default class GeoCapturePlugin extends Plugin {
       id: "search-place-and-insert",
       name: "Quick insert place",
       editorCallback: (editor) => {
-        new PlaceSearchModal(this.app, this.getSearchProvider(), this.settings.searchLanguage, async (place) => {
-          await this.insertPlace(editor, place);
-        }).open();
+        this.openManualPlaceSearch(editor);
+      },
+    });
+
+    this.addCommand({
+      id: "suggest-place-from-image",
+      name: "Suggest place from nearest image",
+      editorCallback: async (editor) => {
+        await this.capturePlaceFromNearestImage(editor);
       },
     });
 
@@ -121,6 +129,73 @@ export default class GeoCapturePlugin extends Plugin {
     }
   }
 
+  private async capturePlaceFromNearestImage(editor: Editor): Promise<void> {
+    const activeFile = this.app.workspace.getActiveFile();
+
+    if (!(activeFile instanceof TFile)) {
+      new Notice("Geo Capture: open a note with an image first.");
+      return;
+    }
+
+    const imageFile = findNearestImageFile(this.app, editor, activeFile);
+
+    if (!imageFile) {
+      new Notice("Geo Capture: no local image found near the cursor. You can enter a place manually.");
+      this.openManualPlaceSearch(editor);
+      return;
+    }
+
+    if (!isSupportedExifImage(imageFile)) {
+      new Notice("Geo Capture: this image type is not supported for EXIF GPS yet. You can enter a place manually.");
+      this.openManualPlaceSearch(editor);
+      return;
+    }
+
+    try {
+      const arrayBuffer = await this.app.vault.readBinary(imageFile);
+      const point = readExifGps(arrayBuffer);
+
+      if (!point) {
+        new Notice("Geo Capture: no GPS metadata found in this image. You can enter a place manually.");
+        this.openManualPlaceSearch(editor);
+        return;
+      }
+
+      const photoLocation: GeoPlace = {
+        ...point,
+        name: `Photo location: ${imageFile.basename}`,
+        address: imageFile.path,
+        source: "image-exif",
+        confidence: "gps-derived",
+      };
+
+      const provider = this.getNearbyProvider();
+
+      if (!provider) {
+        new Notice("Geo Capture: image GPS found. Configure Google Places to see nearby place suggestions.");
+        new PlaceListModal(this.app, [photoLocation], async (place) => {
+          await this.insertPlace(editor, place);
+        }).open();
+        return;
+      }
+
+      new Notice("Geo Capture: image GPS found. Searching nearby places...");
+      const places = await provider.searchNearby(
+        point,
+        this.settings.searchLanguage,
+        this.settings.nearbyRadiusMeters,
+      );
+
+      new PlaceListModal(this.app, [photoLocation, ...places], async (place) => {
+        await this.insertPlace(editor, place);
+      }).open();
+    } catch (error) {
+      console.error(error);
+      new Notice("Geo Capture: unable to read image metadata. You can enter a place manually.");
+      this.openManualPlaceSearch(editor);
+    }
+  }
+
   private async insertPlace(editor: Editor, place: GeoPlace): Promise<void> {
     const markdown = formatPlace(place, this.settings);
     editor.replaceSelection(markdown);
@@ -150,6 +225,12 @@ export default class GeoCapturePlugin extends Plugin {
     }
 
     return null;
+  }
+
+  private openManualPlaceSearch(editor: Editor): void {
+    new PlaceSearchModal(this.app, this.getSearchProvider(), this.settings.searchLanguage, async (place) => {
+      await this.insertPlace(editor, place);
+    }).open();
   }
 }
 

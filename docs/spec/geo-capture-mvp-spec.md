@@ -69,6 +69,18 @@ Behavior:
 - Insert a location snippet.
 - Show a clear notice if no supported location input is found.
 
+### Suggest Place From Nearest Image
+
+The user inserts location information from an image near the editor cursor.
+
+Behavior:
+
+- Find the nearest local image reference in the active note.
+- Support JPG/JPEG EXIF GPS in the first implementation.
+- If GPS coordinates exist and Google Places is configured, search nearby places.
+- If GPS coordinates exist but no nearby provider is configured, offer the raw photo location as an insertable candidate.
+- If GPS coordinates are missing or the image type is unsupported, open manual place input.
+
 ## Location Candidate Model
 
 Each candidate should contain:
