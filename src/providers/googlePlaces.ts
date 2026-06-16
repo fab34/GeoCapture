@@ -48,6 +48,7 @@ export class GooglePlacesProvider implements SearchProvider, NearbySearchProvide
   }
 
   async searchNearby(point: GeoPoint, language: string, radiusMeters: number): Promise<GeoPlace[]> {
+    const radius = Math.min(Math.max(radiusMeters, 100), 50_000);
     const response = await this.post("https://places.googleapis.com/v1/places:searchNearby", {
       maxResultCount: 10,
       rankPreference: "DISTANCE",
@@ -58,7 +59,7 @@ export class GooglePlacesProvider implements SearchProvider, NearbySearchProvide
             latitude: point.lat,
             longitude: point.lon,
           },
-          radius: radiusMeters,
+          radius,
         },
       },
     });

@@ -94,7 +94,7 @@ function createClipboardPlace(
   name: string,
   confidence: GeoPlace["confidence"],
 ): GeoPlace | null {
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+  if (!isValidCoordinate(lat, lon)) {
     return null;
   }
 
@@ -105,4 +105,8 @@ function createClipboardPlace(
     source: "clipboard",
     confidence,
   };
+}
+
+function isValidCoordinate(lat: number, lon: number): boolean {
+  return Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
 }

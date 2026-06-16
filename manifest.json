@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "minAppVersion": "1.5.0",
   "description": "Fast location capture for travel journals, place notes, and trip logs.",
-  "author": "",
-  "authorUrl": "",
+  "author": "fab34",
+  "authorUrl": "https://github.com/fab34",
   "isDesktopOnly": false
 }

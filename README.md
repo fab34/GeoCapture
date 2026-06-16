@@ -93,6 +93,26 @@ Geo Capture 很適合搭配 `fab34/cloudflare-media-sync`：
 - Google Places 需要 API key，可能產生 Google Maps Platform 費用。
 - Google nearby search 目前只在設定 Google Places provider 且填入 API key 時啟用。
 
+### 隱私與資安
+
+- Geo Capture 沒有 telemetry 或 analytics。
+- Geo Capture 不會上傳筆記內容或圖片。
+- 只有在使用者執行搜尋、附近地點或照片地點命令時，才會向選定的地點服務送出搜尋文字或座標。
+- Google Places API key 會儲存在 Obsidian 本機插件資料中，僅用於 Google Places API 請求。
+- 圖片 EXIF GPS 會在本機讀取；只有在使用 Google Places 查詢附近地點時，座標才會送到 Google。
+
+詳細檢查紀錄請見 [docs/security/security-review.md](docs/security/security-review.md)。
+
+### 測試
+
+桌機與手機測試清單請見 [docs/testing/desktop-mobile-test-plan.md](docs/testing/desktop-mobile-test-plan.md)。
+
+送審前建議執行：
+
+```bash
+npm run check
+```
+
 ### 本機開發
 
 ```bash
@@ -219,3 +239,23 @@ Required Obsidian release files:
 - `main.js`
 - `manifest.json`
 - `styles.css`
+
+### Privacy and Security
+
+- Geo Capture does not include telemetry or analytics.
+- Geo Capture does not upload note content or images.
+- Network requests are made only when the user runs search, nearby-place, or photo-location commands.
+- The optional Google Places API key is stored in local Obsidian plugin data and is only used for Google Places API requests.
+- Photo EXIF GPS is read locally; coordinates are sent to Google only when Google Places is configured and used.
+
+See [docs/security/security-review.md](docs/security/security-review.md) for the current security review.
+
+### Testing
+
+See [docs/testing/desktop-mobile-test-plan.md](docs/testing/desktop-mobile-test-plan.md) for the desktop and mobile test checklist.
+
+Before release, run:
+
+```bash
+npm run check
+```
