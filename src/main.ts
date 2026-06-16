@@ -21,7 +21,11 @@ export default class GeoCapturePlugin extends Plugin {
     this.addCommand({
       id: "insert-current-location",
       name: this.t("commandInsertCurrentLocation"),
-      editorCallback: async (editor) => {
+      callback: async () => {
+        const editor = this.getActiveEditor();
+        if (!editor) {
+          return;
+        }
         await this.captureCurrentLocation(editor);
       },
     });
@@ -29,7 +33,11 @@ export default class GeoCapturePlugin extends Plugin {
     this.addCommand({
       id: "capture-nearby-place",
       name: this.t("commandCaptureNearbyPlace"),
-      editorCallback: async (editor) => {
+      callback: async () => {
+        const editor = this.getActiveEditor();
+        if (!editor) {
+          return;
+        }
         await this.captureNearbyPlace(editor);
       },
     });
@@ -37,7 +45,11 @@ export default class GeoCapturePlugin extends Plugin {
     this.addCommand({
       id: "search-place-and-insert",
       name: this.t("commandQuickInsertPlace"),
-      editorCallback: (editor) => {
+      callback: () => {
+        const editor = this.getActiveEditor();
+        if (!editor) {
+          return;
+        }
         this.openManualPlaceSearch(editor);
       },
     });
@@ -45,7 +57,11 @@ export default class GeoCapturePlugin extends Plugin {
     this.addCommand({
       id: "suggest-place-from-image",
       name: this.t("commandSuggestPlaceFromImage"),
-      editorCallback: async (editor) => {
+      callback: async () => {
+        const editor = this.getActiveEditor();
+        if (!editor) {
+          return;
+        }
         await this.capturePlaceFromNearestImage(editor);
       },
     });
@@ -53,7 +69,11 @@ export default class GeoCapturePlugin extends Plugin {
     this.addCommand({
       id: "insert-location-from-clipboard",
       name: this.t("commandInsertLocationFromClipboard"),
-      editorCallback: async (editor) => {
+      callback: async () => {
+        const editor = this.getActiveEditor();
+        if (!editor) {
+          return;
+        }
         await this.captureClipboardLocation(editor);
       },
     });
@@ -270,6 +290,18 @@ export default class GeoCapturePlugin extends Plugin {
     }
 
     return { type: "cursor" };
+  }
+
+  private getActiveEditor(): Editor | null {
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const editor = view?.editor ?? null;
+
+    if (!editor) {
+      new Notice(this.t("noticeOpenEditableNote"));
+      return null;
+    }
+
+    return editor;
   }
 
   private t: Translator = (key, values) => createTranslator(this.settings.uiLanguage)(key, values);
