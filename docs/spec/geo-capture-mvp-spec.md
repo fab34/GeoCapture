@@ -80,6 +80,7 @@ Behavior:
 - If GPS coordinates exist and Google Places is configured, search nearby places.
 - If GPS coordinates exist but no nearby provider is configured, offer the raw photo location as an insertable candidate.
 - If GPS coordinates are missing or the image type is unsupported, open manual place input.
+- Insert the selected place at the current cursor or below the detected image, depending on user settings.
 
 ## Location Candidate Model
 
@@ -178,6 +179,15 @@ Behavior:
 - Command names are localized when the plugin loads.
 - Settings labels, descriptions, notices, modal placeholders, and confidence labels are localized.
 - The place provider search language can be manually configured; when left empty, it follows the effective UI language.
+
+## Image Insert Position Requirements
+
+Photo-based place suggestions must support two insertion modes:
+
+- At current cursor.
+- Below the detected image.
+
+The default mode is current cursor to avoid surprising users. When `below image` is selected, the plugin should insert the selected location snippet immediately after the image line detected by the nearest-image workflow.
 
 ## Error Handling
 

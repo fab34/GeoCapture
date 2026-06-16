@@ -1,10 +1,18 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { createTranslator } from "./i18n";
 import GeoCapturePlugin from "./main";
-import { GeoCaptureSettings, InsertFormat, MapsLinkProvider, PlaceProviderKind, UiLanguage } from "./types";
+import {
+  GeoCaptureSettings,
+  ImageInsertPosition,
+  InsertFormat,
+  MapsLinkProvider,
+  PlaceProviderKind,
+  UiLanguage,
+} from "./types";
 
 export const DEFAULT_SETTINGS: GeoCaptureSettings = {
   uiLanguage: "system",
+  imageInsertPosition: "cursor",
   defaultFormat: "callout",
   mapsLinkProvider: "google",
   placeProvider: "nominatim",
@@ -46,6 +54,22 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
             this.plugin.settings.uiLanguage = value as UiLanguage;
             await this.plugin.saveSettings();
             this.display();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName(t("settingImageInsertPositionName"))
+      .setDesc(t("settingImageInsertPositionDesc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({
+            cursor: t("imageInsertAtCursor"),
+            "below-image": t("imageInsertBelowImage"),
+          })
+          .setValue(this.plugin.settings.imageInsertPosition)
+          .onChange(async (value) => {
+            this.plugin.settings.imageInsertPosition = value as ImageInsertPosition;
+            await this.plugin.saveSettings();
           }),
       );
 

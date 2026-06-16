@@ -9,7 +9,12 @@ interface ImageMatch {
   line: number;
 }
 
-export function findNearestImageFile(app: App, editor: Editor, sourceFile: TFile): TFile | null {
+export interface ImageContext {
+  file: TFile;
+  line: number;
+}
+
+export function findNearestImageContext(app: App, editor: Editor, sourceFile: TFile): ImageContext | null {
   const imageMatches = findImageMatches(editor);
 
   if (imageMatches.length === 0) {
@@ -24,7 +29,10 @@ export function findNearestImageFile(app: App, editor: Editor, sourceFile: TFile
   for (const match of sorted) {
     const imageFile = resolveImageFile(app, sourceFile, match.path);
     if (imageFile) {
-      return imageFile;
+      return {
+        file: imageFile,
+        line: match.line,
+      };
     }
   }
 

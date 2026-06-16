@@ -2,7 +2,7 @@ import { Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
 import { readPlaceFromClipboard } from "./clipboard";
 import { readExifGps } from "./exif";
 import { formatPlace } from "./format";
-import { findNearestImageFile, isSupportedExifImage } from "./images";
+import { ImageContext, findNearestImageContext, isSupportedExifImage } from "./images";
 import { createTranslator, getProviderLanguage, Translator } from "./i18n";
 import { getCurrentPosition } from "./location";
 import { PlaceListModal } from "./placeListModal";
@@ -138,13 +138,15 @@ export default class GeoCapturePlugin extends Plugin {
       return;
     }
 
-    const imageFile = findNearestImageFile(this.app, editor, activeFile);
+    const imageContext = findNearestImageContext(this.app, editor, activeFile);
 
-    if (!imageFile) {
+    if (!imageContext) {
       new Notice(this.t("noticeNoLocalImage"));
       this.openManualPlaceSearch(editor);
       return;
     }
+
+    const imageFile = imageContext.file;
 
     if (!isSupportedExifImage(imageFile)) {
       new Notice(this.t("noticeUnsupportedImageType"));
@@ -175,7 +177,7 @@ export default class GeoCapturePlugin extends Plugin {
       if (!provider) {
         new Notice(this.t("noticeImageGpsFoundNoProvider"));
         new PlaceListModal(this.app, [photoLocation], this.t.bind(this), async (place) => {
-          await this.insertPlace(editor, place);
+          await this.insertPlace(editor, place, this.getImageInsertTarget(imageContext));
         }).open();
         return;
       }
@@ -188,7 +190,7 @@ export default class GeoCapturePlugin extends Plugin {
       );
 
       new PlaceListModal(this.app, [photoLocation, ...places], this.t.bind(this), async (place) => {
-        await this.insertPlace(editor, place);
+        await this.insertPlace(editor, place, this.getImageInsertTarget(imageContext));
       }).open();
     } catch (error) {
       console.error(error);
@@ -197,11 +199,25 @@ export default class GeoCapturePlugin extends Plugin {
     }
   }
 
-  private async insertPlace(editor: Editor, place: GeoPlace): Promise<void> {
+  private async insertPlace(editor: Editor, place: GeoPlace, target?: InsertTarget): Promise<void> {
     const markdown = formatPlace(place, this.settings);
-    editor.replaceSelection(markdown);
-    this.ensureTrailingNewline(editor);
+    const insertTarget = target ?? { type: "cursor" };
+
+    if (insertTarget.type === "below-line") {
+      this.insertBelowLine(editor, insertTarget.line, markdown);
+    } else {
+      editor.replaceSelection(markdown);
+      this.ensureTrailingNewline(editor);
+    }
+
     new Notice(this.t("noticeInsertedPlace", { name: place.name }));
+  }
+
+  private insertBelowLine(editor: Editor, line: number, markdown: string): void {
+    const insertLine = Math.min(line + 1, editor.lineCount());
+    const insertText = `\n${markdown}\n`;
+    editor.replaceRange(insertText, { line: insertLine, ch: 0 });
+    editor.setCursor({ line: insertLine + markdown.split("\n").length, ch: 0 });
   }
 
   private ensureTrailingNewline(editor: Editor): void {
@@ -245,8 +261,28 @@ export default class GeoCapturePlugin extends Plugin {
     };
   }
 
+  private getImageInsertTarget(imageContext: ImageContext): InsertTarget {
+    if (this.settings.imageInsertPosition === "below-image") {
+      return {
+        type: "below-line",
+        line: imageContext.line,
+      };
+    }
+
+    return { type: "cursor" };
+  }
+
   private t: Translator = (key, values) => createTranslator(this.settings.uiLanguage)(key, values);
 }
+
+type InsertTarget =
+  | {
+      type: "cursor";
+    }
+  | {
+      type: "below-line";
+      line: number;
+    };
 
 export function isMarkdownView(view: unknown): view is MarkdownView {
   return view instanceof MarkdownView;

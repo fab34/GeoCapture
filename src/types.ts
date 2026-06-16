@@ -6,6 +6,8 @@ export type PlaceProviderKind = "nominatim" | "google";
 
 export type UiLanguage = "system" | "en" | "zh-TW" | "zh-CN";
 
+export type ImageInsertPosition = "cursor" | "below-image";
+
 export type LocationConfidence =
   | "gps-derived"
   | "search-selected"
@@ -15,6 +17,7 @@ export type LocationConfidence =
 
 export interface GeoCaptureSettings {
   uiLanguage: UiLanguage;
+  imageInsertPosition: ImageInsertPosition;
   defaultFormat: InsertFormat;
   mapsLinkProvider: MapsLinkProvider;
   placeProvider: PlaceProviderKind;
