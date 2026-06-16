@@ -9,13 +9,14 @@ The first version should answer three moments:
 1. I am standing somewhere and want to insert my current location.
 2. I know the place name and want to search it quickly.
 3. I copied a map link and want Obsidian to turn it into clean Markdown.
+4. I only have coordinates and still want to finish the location note.
 
 The MVP should not try to replace Map View. It should be closer to a capture command palette for locations.
 
 ## MVP Commands
 
 - Insert current location
-- Search place and insert
+- Quick insert place from name, coordinates, or map link
 - Insert location from clipboard
 
 ## Insert Formats
@@ -72,12 +73,15 @@ Supported tokens:
 - Reverse geocoding for current location
 - Google Places provider as an optional API-key feature
 - Better short-link expansion for copied map URLs
+- Photo-based place suggestion from EXIF GPS metadata
+- Manual fallback when EXIF GPS is unavailable
 
 ### Phase 3
 
 - Apple Maps-specific import improvements
 - Map View-compatible output option
 - Recent places cache
+- Cloudflare Media Sync command-aware workflow
 
 ## UX Direction
 

@@ -1,4 +1,5 @@
 import { App, Notice, SuggestModal } from "obsidian";
+import { parseMapText } from "./clipboard";
 import { GeoPlace, SearchProvider } from "./types";
 
 export class PlaceSearchModal extends SuggestModal<GeoPlace> {
@@ -18,7 +19,7 @@ export class PlaceSearchModal extends SuggestModal<GeoPlace> {
     this.provider = provider;
     this.language = language;
     this.onChoose = onChoose;
-    this.setPlaceholder("Search a restaurant, station, hotel, or attraction...");
+    this.setPlaceholder("Search a place, paste a map link, or type lat,lng...");
   }
 
   async getSuggestions(query: string): Promise<GeoPlace[]> {
@@ -34,7 +35,9 @@ export class PlaceSearchModal extends SuggestModal<GeoPlace> {
     this.lastQuery = trimmed;
 
     try {
-      this.places = await this.provider.search(trimmed, this.language);
+      const parsedPlace = parseMapText(trimmed);
+      const searchResults = parsedPlace ? [] : await this.provider.search(trimmed, this.language);
+      this.places = parsedPlace ? [parsedPlace] : searchResults;
       return this.places;
     } catch (error) {
       console.error(error);
@@ -46,7 +49,7 @@ export class PlaceSearchModal extends SuggestModal<GeoPlace> {
   renderSuggestion(place: GeoPlace, el: HTMLElement): void {
     el.createEl("div", { text: place.name });
     el.createEl("div", {
-      text: place.address || `${place.lat}, ${place.lon}`,
+      text: place.address || `${place.lat}, ${place.lon}${place.confidence ? ` · ${place.confidence}` : ""}`,
       cls: "geo-capture-place-subtitle",
     });
   }

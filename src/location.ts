@@ -16,6 +16,7 @@ export function getCurrentPosition(): Promise<GeoPlace> {
             ? `GPS accuracy around ${Math.round(position.coords.accuracy)}m`
             : undefined,
           source: "device",
+          confidence: "gps-derived",
         });
       },
       (error) => reject(new Error(error.message || "Unable to get current location.")),

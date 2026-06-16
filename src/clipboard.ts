@@ -40,25 +40,25 @@ function parseGeoUri(url: URL): GeoPlace | null {
   }
 
   const match = url.pathname.match(COORDINATE_PAIR);
-  return match ? placeFromMatch(match, "Geo URI") : null;
+  return match ? placeFromMatch(match, "Geo URI", "map-link") : null;
 }
 
 function parseGoogleUrl(url: URL): GeoPlace | null {
   const atMatch = url.pathname.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
   if (atMatch) {
-    return placeFromMatch(atMatch, "Google Maps link");
+    return placeFromMatch(atMatch, "Google Maps link", "map-link");
   }
 
   const query = url.searchParams.get("query") || url.searchParams.get("q") || "";
   const queryMatch = query.match(COORDINATE_PAIR);
-  return queryMatch ? placeFromMatch(queryMatch, "Google Maps link") : null;
+  return queryMatch ? placeFromMatch(queryMatch, "Google Maps link", "map-link") : null;
 }
 
 function parseAppleUrl(url: URL): GeoPlace | null {
   const ll = url.searchParams.get("ll");
   const match = ll?.match(COORDINATE_PAIR);
   if (match) {
-    return placeFromMatch(match, url.searchParams.get("q") || "Apple Maps link");
+    return placeFromMatch(match, url.searchParams.get("q") || "Apple Maps link", "map-link");
   }
 
   return null;
@@ -68,23 +68,32 @@ function parseOpenStreetMapUrl(url: URL): GeoPlace | null {
   const mlat = url.searchParams.get("mlat");
   const mlon = url.searchParams.get("mlon");
   if (mlat && mlon) {
-    return createClipboardPlace(Number(mlat), Number(mlon), "OpenStreetMap link");
+    return createClipboardPlace(Number(mlat), Number(mlon), "OpenStreetMap link", "map-link");
   }
 
   const hashMatch = url.hash.match(/map=\d+\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)/);
-  return hashMatch ? placeFromMatch(hashMatch, "OpenStreetMap link") : null;
+  return hashMatch ? placeFromMatch(hashMatch, "OpenStreetMap link", "map-link") : null;
 }
 
 function parseCoordinateText(text: string): GeoPlace | null {
   const match = text.match(COORDINATE_PAIR);
-  return match ? placeFromMatch(match, "Clipboard coordinates") : null;
+  return match ? placeFromMatch(match, "Manual coordinates", "manual-coordinate") : null;
 }
 
-function placeFromMatch(match: RegExpMatchArray, name: string): GeoPlace | null {
-  return createClipboardPlace(Number(match[1]), Number(match[2]), name);
+function placeFromMatch(
+  match: RegExpMatchArray,
+  name: string,
+  confidence: GeoPlace["confidence"],
+): GeoPlace | null {
+  return createClipboardPlace(Number(match[1]), Number(match[2]), name, confidence);
 }
 
-function createClipboardPlace(lat: number, lon: number, name: string): GeoPlace | null {
+function createClipboardPlace(
+  lat: number,
+  lon: number,
+  name: string,
+  confidence: GeoPlace["confidence"],
+): GeoPlace | null {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     return null;
   }
@@ -94,5 +103,6 @@ function createClipboardPlace(lat: number, lon: number, name: string): GeoPlace 
     lat,
     lon,
     source: "clipboard",
+    confidence,
   };
 }

@@ -37,6 +37,7 @@ export class NominatimProvider implements SearchProvider {
         lon: Number(result.lon),
         source: "nominatim",
         sourceUrl: buildOsmUrl(result),
+        confidence: "search-selected" as const,
       }))
       .filter((place) => Number.isFinite(place.lat) && Number.isFinite(place.lon));
   }

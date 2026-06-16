@@ -24,7 +24,7 @@ export default class GeoCapturePlugin extends Plugin {
 
     this.addCommand({
       id: "search-place-and-insert",
-      name: "Search place and insert",
+      name: "Quick insert place",
       editorCallback: (editor) => {
         new PlaceSearchModal(this.app, this.searchProvider, this.settings.searchLanguage, async (place) => {
           await this.insertPlace(editor, place);

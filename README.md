@@ -6,6 +6,7 @@ Geo Capture is an Obsidian plugin for fast travel-journal location capture. It f
 
 - Insert current location from the active note.
 - Search places with OpenStreetMap Nominatim and insert the selected result.
+- Accept place names, coordinates, or map links from a single quick-insert flow.
 - Parse common map URLs from the clipboard and insert a location snippet.
 - Offer writing-friendly output formats: compact line, callout block, table row, and configurable template.
 - Keep provider choices replaceable so Google Places, Apple Maps links, and richer reverse geocoding can be added later.
@@ -47,11 +48,14 @@ Required Obsidian release files are `main.js`, `manifest.json`, and optionally `
 - One-tap category labels such as restaurant, cafe, hotel, station, viewpoint
 - Daily-note insertion helpers
 - Frontmatter/properties mode
+- Photo-based place suggestion from EXIF GPS metadata
+- Manual fallback when image metadata is missing
 
 ### Phase 3: Rich Integrations
 
 - Google Places provider option
 - Reverse geocoding
 - Photo adjacency workflow
+- Cloudflare Media Sync command-aware workflow
 - Trip itinerary template integration
 - Optional Map View compatibility output
