@@ -5,6 +5,10 @@ export function buildMapsUrl(place: GeoPlace, provider: MapsLinkProvider): strin
   const lon = encodeURIComponent(String(place.lon));
   const name = encodeURIComponent(place.name);
 
+  if (provider === "google" && place.mapsUrl) {
+    return place.mapsUrl;
+  }
+
   if (provider === "apple") {
     return `https://maps.apple.com/?ll=${lat},${lon}&q=${name}`;
   }

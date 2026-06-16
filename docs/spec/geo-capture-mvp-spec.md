@@ -45,6 +45,19 @@ Future behavior:
 - Use current coordinates to run nearby place search.
 - Offer nearby candidates before insertion.
 
+### Capture Nearby Place
+
+The user chooses from places near their current device location.
+
+Behavior:
+
+- Requires Google Places provider and an API key.
+- Requests current device location.
+- Searches nearby places within the configured radius.
+- Shows a candidate list with name, address, and distance.
+- Includes the raw current location as a fallback candidate.
+- Inserts the selected candidate at the current cursor.
+
 ### Insert Location From Clipboard
 
 The user inserts a map link or coordinates from the clipboard.
@@ -117,10 +130,13 @@ Use OpenStreetMap Nominatim for text search.
 
 ### Future Google Provider
 
-Google Places should support:
+Google Places supports:
 
 - Text search.
 - Nearby search from current location.
+
+Google Places should later support:
+
 - Nearby search from image GPS.
 - Place details for address and map URL.
 

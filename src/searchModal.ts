@@ -1,5 +1,6 @@
 import { App, Notice, SuggestModal } from "obsidian";
 import { parseMapText } from "./clipboard";
+import { formatSubtitle } from "./placeListModal";
 import { GeoPlace, SearchProvider } from "./types";
 
 export class PlaceSearchModal extends SuggestModal<GeoPlace> {
@@ -49,7 +50,7 @@ export class PlaceSearchModal extends SuggestModal<GeoPlace> {
   renderSuggestion(place: GeoPlace, el: HTMLElement): void {
     el.createEl("div", { text: place.name });
     el.createEl("div", {
-      text: place.address || `${place.lat}, ${place.lon}${place.confidence ? ` · ${place.confidence}` : ""}`,
+      text: formatSubtitle(place),
       cls: "geo-capture-place-subtitle",
     });
   }
