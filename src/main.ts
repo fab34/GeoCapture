@@ -4,7 +4,7 @@ import { readExifGps } from "./exif";
 import { formatPlace } from "./format";
 import { ImageContext, findNearestImageContext, isSupportedExifImage } from "./images";
 import { createTranslator, getProviderLanguage, Translator } from "./i18n";
-import { getCurrentPosition } from "./location";
+import { CurrentLocationError, getCurrentPosition } from "./location";
 import { PlaceListModal } from "./placeListModal";
 import { GooglePlacesProvider } from "./providers/googlePlaces";
 import { NominatimProvider } from "./providers/nominatim";
@@ -104,7 +104,7 @@ export default class GeoCapturePlugin extends Plugin {
       await this.insertPlace(editor, place);
     } catch (error) {
       console.error(error);
-      new Notice(error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeUnableToGetLocation"));
+      this.showLocationError(error);
     }
   }
 
@@ -139,7 +139,11 @@ export default class GeoCapturePlugin extends Plugin {
       }).open();
     } catch (error) {
       console.error(error);
-      new Notice(error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeNearbyCaptureFailed"));
+      if (error instanceof CurrentLocationError) {
+        this.showLocationError(error);
+      } else {
+        new Notice(error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeNearbyCaptureFailed"));
+      }
     }
   }
 
@@ -265,7 +269,7 @@ export default class GeoCapturePlugin extends Plugin {
   }
 
   private getNearbyProvider(): NearbySearchProvider | null {
-    if (this.settings.placeProvider === "google" && this.settings.googlePlacesApiKey) {
+    if (this.settings.googlePlacesApiKey) {
       return new GooglePlacesProvider(this.settings.googlePlacesApiKey);
     }
 
@@ -282,7 +286,29 @@ export default class GeoCapturePlugin extends Plugin {
     return {
       currentLocation: this.t("currentLocation"),
       gpsAccuracy: (meters: number) => this.t("gpsAccuracy", { meters }),
+      retryingCurrentLocation: this.t("noticeRetryingCurrentLocation"),
     };
+  }
+
+  private showLocationError(error: unknown): void {
+    if (error instanceof CurrentLocationError) {
+      if (error.code === "permission-denied") {
+        new Notice(this.t("noticeLocationPermissionDenied"));
+        return;
+      }
+
+      if (error.code === "timeout") {
+        new Notice(this.t("noticeLocationTimeout"));
+        return;
+      }
+
+      if (error.code === "unavailable" || error.code === "unsupported") {
+        new Notice(this.t("noticeLocationUnavailable"));
+        return;
+      }
+    }
+
+    new Notice(error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeUnableToGetLocation"));
   }
 
   private getImageInsertTarget(imageContext: ImageContext): InsertTarget {
