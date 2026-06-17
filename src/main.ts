@@ -293,11 +293,34 @@ export default class GeoCapturePlugin extends Plugin {
       return;
     }
 
+    const imageFile = imageContext.file;
+    let exifStatus = "not-checked";
+    let exifError = "none";
+
+    if (imageFile) {
+      if (isSupportedExifImage(imageFile)) {
+        try {
+          const arrayBuffer = await this.app.vault.readBinary(imageFile);
+          const exifPoint = readExifGps(arrayBuffer);
+          exifStatus = exifPoint
+            ? `yes ${exifPoint.lat.toFixed(6)},${exifPoint.lon.toFixed(6)}`
+            : "no";
+        } catch (error) {
+          exifStatus = "error";
+          exifError = error instanceof Error ? error.message : String(error);
+        }
+      } else {
+        exifStatus = "unsupported-type";
+      }
+    }
+
     const { diagnostics } = await findMediaSyncGpsWithDiagnostics(this.app, imageContext.path);
     new Notice(
       this.t("noticeImageLocationDiagnostics", {
         image: imageContext.path,
         local: imageContext.file ? "yes" : "no",
+        exif: exifStatus,
+        exifError,
         metadata: diagnostics.metadataFound ? "yes" : "no",
         entries: diagnostics.entriesChecked,
         gpsEntries: diagnostics.entriesWithGps,
