@@ -44,7 +44,7 @@ export default class GeoCapturePlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    const loaded = await this.loadData();
+    const loaded: unknown = await this.loadData();
     this.settings = { ...DEFAULT_SETTINGS, ...(isRecord(loaded) ? loaded : {}) };
   }
 
@@ -171,9 +171,7 @@ export default class GeoCapturePlugin extends Plugin {
         return;
       }
 
-      new PlaceListModal(this.app, [currentLocation, ...places], this.t.bind(this), async (place) => {
-        await this.insertPlace(editor, place);
-      }).open();
+      this.openPlaceListModal([currentLocation, ...places], (place) => this.insertPlace(editor, place));
     } catch (error) {
       console.error(error);
       if (error instanceof CurrentLocationError) {
@@ -291,9 +289,9 @@ export default class GeoCapturePlugin extends Plugin {
 
       if (!provider) {
         new Notice(this.t("noticeImageGpsFoundNoProvider"));
-        new PlaceListModal(this.app, [point], this.t.bind(this), async (place) => {
-          await this.insertPlace(editor, place, this.getImageInsertTarget(imageContext));
-        }).open();
+        this.openPlaceListModal([point], (place) =>
+          this.insertPlace(editor, place, this.getImageInsertTarget(imageContext)),
+        );
         return;
       }
 
@@ -304,9 +302,9 @@ export default class GeoCapturePlugin extends Plugin {
         this.settings.nearbyRadiusMeters,
       );
 
-      new PlaceListModal(this.app, [point, ...places], this.t.bind(this), async (place) => {
-        await this.insertPlace(editor, place, this.getImageInsertTarget(imageContext));
-      }).open();
+      this.openPlaceListModal([point, ...places], (place) =>
+        this.insertPlace(editor, place, this.getImageInsertTarget(imageContext)),
+      );
     } catch (error) {
       console.error(error);
       new Notice(error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeNearbyCaptureFailed"));
@@ -426,8 +424,23 @@ export default class GeoCapturePlugin extends Plugin {
   }
 
   private openManualPlaceSearch(editor: Editor): void {
-    new PlaceSearchModal(this.app, this.getSearchProvider(), this.getSearchLanguage(), this.t.bind(this), async (place) => {
-      await this.insertPlace(editor, place);
+    new PlaceSearchModal(
+      this.app,
+      this.getSearchProvider(),
+      this.getSearchLanguage(),
+      this.t.bind(this),
+      (place) => {
+        void this.insertPlace(editor, place);
+      },
+    ).open();
+  }
+
+  private openPlaceListModal(
+    places: GeoPlace[],
+    onChoose: (place: GeoPlace) => Promise<void>,
+  ): void {
+    new PlaceListModal(this.app, places, this.t.bind(this), (place) => {
+      void onChoose(place);
     }).open();
   }
 
