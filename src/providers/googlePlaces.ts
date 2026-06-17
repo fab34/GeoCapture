@@ -114,9 +114,20 @@ export class GooglePlacesProvider implements SearchProvider, NearbySearchProvide
         "X-Goog-Api-Key": this.apiKey,
         "X-Goog-FieldMask": FIELD_MASK,
       },
+      throw: false,
     });
 
-    return response.json as GooglePlacesResponse;
+    const bodyJson = response.json as GooglePlacesResponse;
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(this.describeError(response.status, bodyJson, response.text));
+    }
+
+    if (bodyJson.error) {
+      throw new Error(this.describeError(response.status, bodyJson, response.text));
+    }
+
+    return bodyJson;
   }
 
   private toPlaces(

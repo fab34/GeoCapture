@@ -273,7 +273,7 @@ export default class GeoCapturePlugin extends Plugin {
       }).open();
     } catch (error) {
       console.error(error);
-      new Notice(this.t("noticeImageMetadataFailed"));
+      new Notice(error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeNearbyCaptureFailed"));
       this.openManualPlaceSearch(editor);
     }
   }
@@ -315,6 +315,10 @@ export default class GeoCapturePlugin extends Plugin {
     }
 
     const { diagnostics } = await findMediaSyncGpsWithDiagnostics(this.app, imageContext.path);
+    const reason = exifStatus.startsWith("yes")
+      ? "local EXIF GPS found; metadata fallback not needed"
+      : diagnostics.reason;
+
     new Notice(
       this.t("noticeImageLocationDiagnostics", {
         image: imageContext.path,
@@ -325,7 +329,7 @@ export default class GeoCapturePlugin extends Plugin {
         entries: diagnostics.entriesChecked,
         gpsEntries: diagnostics.entriesWithGps,
         match: diagnostics.matchedEntry ? "yes" : "no",
-        reason: diagnostics.reason,
+        reason,
       }),
       12000,
     );
