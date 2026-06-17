@@ -5,7 +5,7 @@ import { formatPlace } from "./format";
 import { ImageContext, findNearestImageContext, isSupportedExifImage } from "./images";
 import { createTranslator, getProviderLanguage, Translator } from "./i18n";
 import { CurrentLocationError, getCurrentPosition } from "./location";
-import { findMediaSyncGps } from "./mediaSyncMetadata";
+import { findMediaSyncGps, findMediaSyncGpsWithDiagnostics } from "./mediaSyncMetadata";
 import { PlaceListModal } from "./placeListModal";
 import { GooglePlacesProvider } from "./providers/googlePlaces";
 import { NominatimProvider } from "./providers/nominatim";
@@ -96,6 +96,18 @@ export default class GeoCapturePlugin extends Plugin {
           return;
         }
         await this.capturePlaceFromNearestImage(editor);
+      },
+    });
+
+    this.addCommand({
+      id: "diagnose-nearest-image-location",
+      name: this.t("commandDiagnoseImageLocation"),
+      callback: async () => {
+        const editor = this.getActiveEditor();
+        if (!editor) {
+          return;
+        }
+        await this.diagnoseNearestImageLocation(editor);
       },
     });
 
@@ -264,6 +276,36 @@ export default class GeoCapturePlugin extends Plugin {
       new Notice(this.t("noticeImageMetadataFailed"));
       this.openManualPlaceSearch(editor);
     }
+  }
+
+  private async diagnoseNearestImageLocation(editor: Editor): Promise<void> {
+    const activeFile = this.app.workspace.getActiveFile();
+
+    if (!(activeFile instanceof TFile)) {
+      new Notice(this.t("noticeOpenNoteWithImage"));
+      return;
+    }
+
+    const imageContext = findNearestImageContext(this.app, editor, activeFile);
+
+    if (!imageContext) {
+      new Notice(this.t("noticeNoLocalImage"));
+      return;
+    }
+
+    const { diagnostics } = await findMediaSyncGpsWithDiagnostics(this.app, imageContext.path);
+    new Notice(
+      this.t("noticeImageLocationDiagnostics", {
+        image: imageContext.path,
+        local: imageContext.file ? "yes" : "no",
+        metadata: diagnostics.metadataFound ? "yes" : "no",
+        entries: diagnostics.entriesChecked,
+        gpsEntries: diagnostics.entriesWithGps,
+        match: diagnostics.matchedEntry ? "yes" : "no",
+        reason: diagnostics.reason,
+      }),
+      12000,
+    );
   }
 
   private async insertPlace(editor: Editor, place: GeoPlace, target?: InsertTarget): Promise<void> {

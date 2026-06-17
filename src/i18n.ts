@@ -12,6 +12,7 @@ const translations = {
     commandCaptureNearbyPlace: "Capture nearby place",
     commandQuickInsertPlace: "Quick insert place",
     commandSuggestPlaceFromImage: "Suggest place from nearest image",
+    commandDiagnoseImageLocation: "Diagnose nearest image location",
     commandInsertLocationFromClipboard: "Insert location from clipboard",
     settingsTitle: "Geo Capture",
     settingUiLanguageName: "Display language",
@@ -71,6 +72,8 @@ const translations = {
     noticeUnsupportedImageType:
       "Geo Capture: this image type is not supported for EXIF GPS yet. You can enter a place manually.",
     noticeNoImageGps: "Geo Capture: no GPS metadata found in this image. You can enter a place manually.",
+    noticeImageLocationDiagnostics:
+      "Geo Capture diagnostics: image={image}; local={local}; metadata={metadata}; entries={entries}; gpsEntries={gpsEntries}; match={match}; reason={reason}",
     noticeImageGpsFoundNoProvider:
       "Geo Capture: image GPS found. Configure Google Places to see nearby place suggestions.",
     noticeImageGpsSearching: "Geo Capture: image GPS found. Searching nearby places...",
@@ -94,6 +97,7 @@ const translations = {
     commandCaptureNearbyPlace: "擷取附近地點",
     commandQuickInsertPlace: "快速插入地點",
     commandSuggestPlaceFromImage: "從附近圖片建議地點",
+    commandDiagnoseImageLocation: "診斷附近圖片定位",
     commandInsertLocationFromClipboard: "從剪貼簿插入位置",
     settingsTitle: "Geo Capture",
     settingUiLanguageName: "顯示語言",
@@ -148,6 +152,8 @@ const translations = {
     noticeNoLocalImage: "Geo Capture：游標附近找不到本機圖片，可改用手動輸入地點。",
     noticeUnsupportedImageType: "Geo Capture：此圖片格式尚未支援 EXIF GPS，可改用手動輸入地點。",
     noticeNoImageGps: "Geo Capture：此圖片沒有 GPS metadata，可改用手動輸入地點。",
+    noticeImageLocationDiagnostics:
+      "Geo Capture 診斷：圖片={image}；本機={local}；metadata={metadata}；條目={entries}；GPS條目={gpsEntries}；匹配={match}；原因={reason}",
     noticeImageGpsFoundNoProvider: "Geo Capture：已找到圖片 GPS。設定 Google Places 後可查看附近地點建議。",
     noticeImageGpsSearching: "Geo Capture：已找到圖片 GPS，正在搜尋附近地點...",
     noticeImageMetadataFailed: "Geo Capture：無法讀取圖片 metadata，可改用手動輸入地點。",
@@ -170,6 +176,7 @@ const translations = {
     commandCaptureNearbyPlace: "捕捉附近地点",
     commandQuickInsertPlace: "快速插入地点",
     commandSuggestPlaceFromImage: "从附近图片建议地点",
+    commandDiagnoseImageLocation: "诊断附近图片定位",
     commandInsertLocationFromClipboard: "从剪贴板插入位置",
     settingsTitle: "Geo Capture",
     settingUiLanguageName: "显示语言",
@@ -224,6 +231,8 @@ const translations = {
     noticeNoLocalImage: "Geo Capture：光标附近找不到本地图片，可改用手动输入地点。",
     noticeUnsupportedImageType: "Geo Capture：此图片格式尚未支持 EXIF GPS，可改用手动输入地点。",
     noticeNoImageGps: "Geo Capture：此图片没有 GPS metadata，可改用手动输入地点。",
+    noticeImageLocationDiagnostics:
+      "Geo Capture 诊断：图片={image}；本地={local}；metadata={metadata}；条目={entries}；GPS条目={gpsEntries}；匹配={match}；原因={reason}",
     noticeImageGpsFoundNoProvider: "Geo Capture：已找到图片 GPS。设置 Google Places 后可查看附近地点建议。",
     noticeImageGpsSearching: "Geo Capture：已找到图片 GPS，正在搜索附近地点...",
     noticeImageMetadataFailed: "Geo Capture：无法读取图片 metadata，可改用手动输入地点。",
