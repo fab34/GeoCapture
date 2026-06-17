@@ -38,8 +38,6 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
     const t = createTranslator(this.plugin.settings.uiLanguage);
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: t("settingsTitle") });
-
     new Setting(containerEl)
       .setName(t("settingUiLanguageName"))
       .setDesc(t("settingUiLanguageDesc"))
@@ -140,7 +138,6 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
       .addSlider((slider) =>
         slider
           .setLimits(100, 2000, 100)
-          .setDynamicTooltip()
           .setValue(this.plugin.settings.nearbyRadiusMeters)
           .onChange(async (value) => {
             this.plugin.settings.nearbyRadiusMeters = value;

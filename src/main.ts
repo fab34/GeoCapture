@@ -16,7 +16,11 @@ import { GooglePlacesProvider } from "./providers/googlePlaces";
 import { NominatimProvider } from "./providers/nominatim";
 import { PlaceSearchModal } from "./searchModal";
 import { DEFAULT_SETTINGS, GeoCaptureSettingTab } from "./settings";
-import { CachedImageGps, GeoCaptureSettings, GeoPlace, GeoPoint, NearbySearchProvider, SearchProvider } from "./types";
+import { CachedImageGps, GeoCaptureSettings, GeoPlace, NearbySearchProvider, SearchProvider } from "./types";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 export default class GeoCapturePlugin extends Plugin {
   declare settings: GeoCaptureSettings;
@@ -40,7 +44,8 @@ export default class GeoCapturePlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const loaded = await this.loadData();
+    this.settings = { ...DEFAULT_SETTINGS, ...(isRecord(loaded) ? loaded : {}) };
   }
 
   async saveSettings(): Promise<void> {

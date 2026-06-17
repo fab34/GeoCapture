@@ -1,4 +1,3 @@
-import { getLanguage } from "obsidian";
 import { LocationConfidence, UiLanguage } from "./types";
 
 export type LocaleCode = "en" | "zh-TW" | "zh-CN";
@@ -272,7 +271,7 @@ export function getEffectiveLocale(language: UiLanguage): LocaleCode {
   }
 
   const browserLanguage = typeof navigator !== "undefined" ? navigator.language : "en";
-  return normalizeLocale(getLanguage() || browserLanguage || "en");
+  return normalizeLocale(browserLanguage || "en");
 }
 
 export function getProviderLanguage(language: UiLanguage, fallback: string): string {
