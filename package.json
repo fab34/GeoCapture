@@ -1,6 +1,6 @@
 {
   "name": "geo-capture",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Fast location capture for travel journals in Obsidian.",
   "main": "main.js",
   "scripts": {

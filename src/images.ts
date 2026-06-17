@@ -70,20 +70,22 @@ function findLineMatches(text: string, line: number, regex: RegExp): ImageMatch[
 }
 
 function resolveImageFile(app: App, sourceFile: TFile, imagePath: string): TFile | null {
-  if (/^[a-z]+:\/\//i.test(imagePath)) {
-    return null;
+  if (!/^[a-z]+:\/\//i.test(imagePath)) {
+    const linkedFile = app.metadataCache.getFirstLinkpathDest(imagePath, sourceFile.path);
+    if (linkedFile instanceof TFile) {
+      return linkedFile;
+    }
+
+    const sourceFolder = sourceFile.parent?.path ?? "";
+    const relativePath = normalizePath(sourceFolder ? `${sourceFolder}/${imagePath}` : imagePath);
+    const file = app.vault.getAbstractFileByPath(relativePath);
+
+    if (file instanceof TFile) {
+      return file;
+    }
   }
 
-  const linkedFile = app.metadataCache.getFirstLinkpathDest(imagePath, sourceFile.path);
-  if (linkedFile instanceof TFile) {
-    return linkedFile;
-  }
-
-  const sourceFolder = sourceFile.parent?.path ?? "";
-  const relativePath = normalizePath(sourceFolder ? `${sourceFolder}/${imagePath}` : imagePath);
-  const file = app.vault.getAbstractFileByPath(relativePath);
-
-  return file instanceof TFile ? file : null;
+  return findImageFileByName(app, imagePath);
 }
 
 function cleanImagePath(path: string | undefined): string | null {
@@ -98,4 +100,31 @@ function cleanImagePath(path: string | undefined): string | null {
   } catch {
     return trimmed;
   }
+}
+
+function findImageFileByName(app: App, imagePath: string): TFile | null {
+  const fileName = getFileName(imagePath);
+
+  if (!fileName) {
+    return null;
+  }
+
+  const lowerFileName = fileName.toLowerCase();
+  const candidates = app.vault
+    .getFiles()
+    .filter((file) => file.name.toLowerCase() === lowerFileName);
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  return candidates.find(isSupportedExifImage) ?? candidates[0];
+}
+
+function getFileName(imagePath: string): string | null {
+  const withoutQuery = imagePath.split(/[?#]/)[0];
+  const parts = normalizePath(withoutQuery).split("/");
+  const fileName = parts.at(-1)?.trim();
+
+  return fileName || null;
 }
