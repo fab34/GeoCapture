@@ -1,5 +1,10 @@
 # Geo Capture
 
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/fab34/GeoCapture?color=2ea44f)](https://github.com/fab34/GeoCapture/releases/latest)
+[![Obsidian Version](https://img.shields.io/badge/Obsidian-v1.5.0+-purple?logo=obsidian)](https://obsidian.md/)
+[![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=purple&label=downloads&query=%24%5B%22geo-capture%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=geo-capture)
+[![GitHub license](https://img.shields.io/github/license/fab34/GeoCapture)](https://github.com/fab34/GeoCapture/blob/main/LICENSE)
+
 [English README](./README.md)
 
 Geo Capture 是一個專為 Obsidian 旅遊手帳、踩點紀錄、餐廳心得、照片回憶設計的快速地點插入插件。
