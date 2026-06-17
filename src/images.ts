@@ -3,6 +3,7 @@ import { App, Editor, TFile, normalizePath } from "obsidian";
 const WIKI_IMAGE = /!\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|[^\]]*)?]]/g;
 const MARKDOWN_IMAGE = /!\[[^\]]*]\(([^)]+)\)/g;
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(["jpg", "jpeg"]);
+const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "gif", "webp", "heic", "heif"]);
 
 interface ImageMatch {
   path: string;
@@ -13,6 +14,15 @@ export interface ImageContext {
   file: TFile | null;
   line: number;
   path: string;
+}
+
+export interface ImageResolutionDiagnostics {
+  fileName: string;
+  stem: string;
+  vaultImages: number;
+  sameName: number;
+  sameStem: number;
+  candidates: string;
 }
 
 export function findNearestImageContext(app: App, editor: Editor, sourceFile: TFile): ImageContext | null {
@@ -41,6 +51,29 @@ export function findNearestImageContext(app: App, editor: Editor, sourceFile: TF
 
 export function isSupportedExifImage(file: TFile): boolean {
   return SUPPORTED_IMAGE_EXTENSIONS.has(file.extension.toLowerCase());
+}
+
+export function diagnoseImageResolution(app: App, imagePath: string): ImageResolutionDiagnostics {
+  const fileName = getFileName(imagePath) ?? "";
+  const stem = getFileStem(fileName);
+  const imageFiles = app.vault.getFiles().filter(isImageFile);
+  const lowerFileName = fileName.toLowerCase();
+  const lowerStem = stem.toLowerCase();
+  const sameName = imageFiles.filter((file) => file.name.toLowerCase() === lowerFileName);
+  const sameStem = imageFiles.filter((file) => getFileStem(file.name).toLowerCase() === lowerStem);
+  const candidates = [...sameName, ...sameStem.filter((file) => !sameName.includes(file))]
+    .slice(0, 3)
+    .map((file) => file.path)
+    .join(" | ");
+
+  return {
+    fileName,
+    stem,
+    vaultImages: imageFiles.length,
+    sameName: sameName.length,
+    sameStem: sameStem.length,
+    candidates: candidates || "none",
+  };
 }
 
 function findImageMatches(editor: Editor): ImageMatch[] {
@@ -110,9 +143,11 @@ function findImageFileByName(app: App, imagePath: string): TFile | null {
   }
 
   const lowerFileName = fileName.toLowerCase();
-  const candidates = app.vault
-    .getFiles()
-    .filter((file) => file.name.toLowerCase() === lowerFileName);
+  const lowerStem = getFileStem(fileName).toLowerCase();
+  const imageFiles = app.vault.getFiles().filter(isImageFile);
+  const exactCandidates = imageFiles.filter((file) => file.name.toLowerCase() === lowerFileName);
+  const stemCandidates = imageFiles.filter((file) => getFileStem(file.name).toLowerCase() === lowerStem);
+  const candidates = [...exactCandidates, ...stemCandidates.filter((file) => !exactCandidates.includes(file))];
 
   if (candidates.length === 0) {
     return null;
@@ -124,7 +159,16 @@ function findImageFileByName(app: App, imagePath: string): TFile | null {
 function getFileName(imagePath: string): string | null {
   const withoutQuery = imagePath.split(/[?#]/)[0];
   const parts = normalizePath(withoutQuery).split("/");
-  const fileName = parts.at(-1)?.trim();
+  const fileName = parts[parts.length - 1]?.trim();
 
   return fileName || null;
+}
+
+function getFileStem(fileName: string): string {
+  const extensionStart = fileName.lastIndexOf(".");
+  return extensionStart > 0 ? fileName.slice(0, extensionStart) : fileName;
+}
+
+function isImageFile(file: TFile): boolean {
+  return IMAGE_EXTENSIONS.has(file.extension.toLowerCase());
 }

@@ -2,7 +2,12 @@ import { Editor, MarkdownView, Notice, Platform, Plugin, TFile } from "obsidian"
 import { readPlaceFromClipboard } from "./clipboard";
 import { readExifGps } from "./exif";
 import { formatPlace } from "./format";
-import { ImageContext, findNearestImageContext, isSupportedExifImage } from "./images";
+import {
+  ImageContext,
+  diagnoseImageResolution,
+  findNearestImageContext,
+  isSupportedExifImage,
+} from "./images";
 import { createTranslator, getProviderLanguage, Translator } from "./i18n";
 import { CurrentLocationError, getCurrentPosition } from "./location";
 import { findMediaSyncGps, findMediaSyncGpsWithDiagnostics } from "./mediaSyncMetadata";
@@ -314,6 +319,7 @@ export default class GeoCapturePlugin extends Plugin {
       }
     }
 
+    const resolutionDiagnostics = diagnoseImageResolution(this.app, imageContext.path);
     const { diagnostics } = await findMediaSyncGpsWithDiagnostics(this.app, imageContext.path);
     const reason = exifStatus.startsWith("yes")
       ? "local EXIF GPS found; metadata fallback not needed"
@@ -325,6 +331,10 @@ export default class GeoCapturePlugin extends Plugin {
         local: imageContext.file ? "yes" : "no",
         exif: exifStatus,
         exifError,
+        vaultImages: resolutionDiagnostics.vaultImages,
+        sameName: resolutionDiagnostics.sameName,
+        sameStem: resolutionDiagnostics.sameStem,
+        candidates: resolutionDiagnostics.candidates,
         metadata: diagnostics.metadataFound ? "yes" : "no",
         entries: diagnostics.entriesChecked,
         gpsEntries: diagnostics.entriesWithGps,
