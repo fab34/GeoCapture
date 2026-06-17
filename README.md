@@ -107,6 +107,18 @@ The location annotation remains readable even after the local image link is repl
 
 See [docs/security/security-review.md](docs/security/security-review.md) for the current security review.
 
+## Release Provenance
+
+Geo Capture release assets now include GitHub artifact attestations.
+
+Each published release can automatically generate provenance attestations for:
+
+- `manifest.json`
+- `main.js`
+- `styles.css`
+
+This helps users verify that release assets were built from the source repository through GitHub Actions.
+
 ## Testing
 
 See [docs/testing/desktop-mobile-test-plan.md](docs/testing/desktop-mobile-test-plan.md) for the desktop and mobile test checklist.
@@ -135,3 +147,7 @@ Required Obsidian release files:
 - `main.js`
 - `manifest.json`
 - `styles.css`
+
+Published releases are available on GitHub:
+
+- [0.1.12](https://github.com/fab34/GeoCapture/releases/tag/0.1.12)

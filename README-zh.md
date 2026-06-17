@@ -107,6 +107,18 @@ Geo Capture 很適合搭配 `fab34/cloudflare-media-sync`：
 
 詳細檢查紀錄請見 [docs/security/security-review.md](docs/security/security-review.md)。
 
+## Release Provenance
+
+Geo Capture 的 GitHub release 現在已加入 artifact attestation 流程。
+
+每次正式發布後，GitHub Actions 可自動為下列 release 檔案建立 provenance attestation：
+
+- `manifest.json`
+- `main.js`
+- `styles.css`
+
+這可讓使用者驗證 release 檔案確實是由 GitHub 上的原始碼倉庫建置產生。
+
 ## 測試
 
 桌機與手機測試清單請見 [docs/testing/desktop-mobile-test-plan.md](docs/testing/desktop-mobile-test-plan.md)。
@@ -135,3 +147,7 @@ Obsidian release 必要檔案：
 - `main.js`
 - `manifest.json`
 - `styles.css`
+
+目前已發布版本可見 GitHub Releases：
+
+- [0.1.12](https://github.com/fab34/GeoCapture/releases/tag/0.1.12)
