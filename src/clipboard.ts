@@ -3,6 +3,10 @@ import { GeoPlace } from "./types";
 const COORDINATE_PAIR = /(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/;
 
 export async function readPlaceFromClipboard(): Promise<GeoPlace | null> {
+  if (typeof navigator === "undefined" || !navigator.clipboard?.readText) {
+    return null;
+  }
+
   const text = await navigator.clipboard.readText();
   if (!text.trim()) {
     return null;

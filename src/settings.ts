@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import { createTranslator } from "./i18n";
-import GeoCapturePlugin from "./main";
+import type GeoCapturePlugin from "./main";
 import { GooglePlacesProvider } from "./providers/googlePlaces";
 import {
   GeoCaptureSettings,

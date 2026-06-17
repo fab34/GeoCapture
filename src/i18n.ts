@@ -262,7 +262,8 @@ export function getEffectiveLocale(language: UiLanguage): LocaleCode {
     return normalizeLocale(language);
   }
 
-  return normalizeLocale(getLanguage() || navigator.language || "en");
+  const browserLanguage = typeof navigator !== "undefined" ? navigator.language : "en";
+  return normalizeLocale(getLanguage() || browserLanguage || "en");
 }
 
 export function getProviderLanguage(language: UiLanguage, fallback: string): string {

@@ -18,6 +18,7 @@ It is not designed to replace a full map workspace. Its job is to help you inser
 - Use one quick insert flow for place names, coordinates, and map links.
 - Parse map links or coordinates from the clipboard.
 - Read EXIF GPS from nearby local JPG/JPEG images in the current note.
+- Fall back to R2 Media Sync's local image metadata cache when the nearby image has already been rewritten to an R2 URL or the local attachment is unavailable.
 - Insert photo-derived places at the current cursor or directly below the image.
 - Fall back to manual place input when image GPS metadata is missing.
 - Insert Markdown-friendly place snippets in compact, callout, table row, or custom template formats.
@@ -39,7 +40,7 @@ It is not designed to replace a full map workspace. Its job is to help you inser
   Parse coordinates or common map links from the clipboard.
 
 - `Geo Capture: Suggest place from nearest image`
-  Find a nearby local image in the current note, read JPG/JPEG EXIF GPS, and suggest nearby places.
+  Find a nearby image in the current note, read JPG/JPEG EXIF GPS or R2 Media Sync metadata, and suggest nearby places.
 
 ## Google Places Setup
 
@@ -76,16 +77,18 @@ When set to `Below the image`, `Suggest place from nearest image` inserts the se
 Geo Capture is designed to pair with `fab34/cloudflare-media-sync`:
 
 1. Insert photos into an Obsidian note.
-2. Let Geo Capture read local JPG/JPEG EXIF GPS.
-3. Select a nearby place or enter a place manually.
-4. Geo Capture writes durable location Markdown into the note.
-5. Cloudflare Media Sync uploads the image to Cloudflare R2 and rewrites the image link.
+2. R2 Media Sync reads available JPEG GPS coordinates before uploading and records them in its local `image_metadata.json` cache.
+3. Cloudflare Media Sync uploads the image to Cloudflare R2 and rewrites the image link.
+4. Let Geo Capture read local JPG/JPEG EXIF GPS, or fall back to the R2 Media Sync metadata cache when the note already contains an R2 URL.
+5. Select a nearby place or enter a place manually.
+6. Geo Capture writes durable location Markdown into the note.
 
 The location annotation remains readable even after the local image link is replaced by an R2 URL.
 
 ## Current Limitations
 
 - EXIF GPS reading currently supports local JPG/JPEG files.
+- R2 URL fallback depends on R2 Media Sync having captured GPS metadata before the image was uploaded.
 - HEIC, PNG, WebP, and remote image URL metadata reading are not implemented yet.
 - Many photos lose GPS metadata because of privacy settings, compression, social apps, or transfer workflows.
 - Google Places requires an API key and may incur Google Maps Platform costs.
@@ -98,6 +101,7 @@ The location annotation remains readable even after the local image link is repl
 - Network requests are made only when the user runs search, nearby-place, or photo-location commands.
 - The optional Google Places API key is stored in local Obsidian plugin data and is only used for Google Places API requests.
 - Photo EXIF GPS is read locally; coordinates are sent to Google only when Google Places is configured and used.
+- When Cloudflare Media Sync metadata fallback is used, Geo Capture reads `.obsidian/plugins/cloudflare-media-sync/image_metadata.json` locally and does not modify it.
 
 See [docs/security/security-review.md](docs/security/security-review.md) for the current security review.
 

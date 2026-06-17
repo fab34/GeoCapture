@@ -1,10 +1,11 @@
-import { Editor, MarkdownView, Notice, Plugin, TFile } from "obsidian";
+import { Editor, MarkdownView, Notice, Platform, Plugin, TFile } from "obsidian";
 import { readPlaceFromClipboard } from "./clipboard";
 import { readExifGps } from "./exif";
 import { formatPlace } from "./format";
 import { ImageContext, findNearestImageContext, isSupportedExifImage } from "./images";
 import { createTranslator, getProviderLanguage, Translator } from "./i18n";
 import { CurrentLocationError, getCurrentPosition } from "./location";
+import { findMediaSyncGps } from "./mediaSyncMetadata";
 import { PlaceListModal } from "./placeListModal";
 import { GooglePlacesProvider } from "./providers/googlePlaces";
 import { NominatimProvider } from "./providers/nominatim";
@@ -16,8 +17,40 @@ export default class GeoCapturePlugin extends Plugin {
   declare settings: GeoCaptureSettings;
 
   async onload(): Promise<void> {
-    await this.loadSettings();
+    try {
+      await this.loadSettings();
+    } catch (error) {
+      console.error("Geo Capture: failed to load settings.", error);
+      this.settings = { ...DEFAULT_SETTINGS };
+      new Notice("Geo Capture: failed to load saved settings. Using defaults.");
+    }
 
+    try {
+      this.registerCommands();
+      this.addSettingTab(new GeoCaptureSettingTab(this.app, this));
+    } catch (error) {
+      console.error("Geo Capture: failed to finish plugin startup.", error);
+      new Notice("Geo Capture: startup failed. The plugin was loaded in safe mode.");
+    }
+  }
+
+  async loadSettings(): Promise<void> {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings(): Promise<void> {
+    await this.saveData(this.settings);
+  }
+
+  getSearchLanguage(): string {
+    return getProviderLanguage(this.settings.uiLanguage, this.settings.searchLanguage);
+  }
+
+  showNotice(key: Parameters<Translator>[0], values?: Record<string, string | number>): void {
+    new Notice(this.t(key, values));
+  }
+
+  private registerCommands(): void {
     this.addCommand({
       id: "insert-current-location",
       name: this.t("commandInsertCurrentLocation"),
@@ -77,24 +110,6 @@ export default class GeoCapturePlugin extends Plugin {
         await this.captureClipboardLocation(editor);
       },
     });
-
-    this.addSettingTab(new GeoCaptureSettingTab(this.app, this));
-  }
-
-  async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-  }
-
-  async saveSettings(): Promise<void> {
-    await this.saveData(this.settings);
-  }
-
-  getSearchLanguage(): string {
-    return getProviderLanguage(this.settings.uiLanguage, this.settings.searchLanguage);
-  }
-
-  showNotice(key: Parameters<Translator>[0], values?: Record<string, string | number>): void {
-    new Notice(this.t(key, values));
   }
 
   private async captureCurrentLocation(editor: Editor): Promise<void> {
@@ -151,7 +166,9 @@ export default class GeoCapturePlugin extends Plugin {
     try {
       const place = await readPlaceFromClipboard();
       if (!place) {
-        new Notice(this.t("noticeNoClipboardLocation"));
+        new Notice(
+          this.isMobileRuntime() ? this.t("noticeClipboardReadFailed") : this.t("noticeNoClipboardLocation"),
+        );
         return;
       }
 
@@ -179,36 +196,54 @@ export default class GeoCapturePlugin extends Plugin {
     }
 
     const imageFile = imageContext.file;
+    let point: GeoPlace | null = null;
 
-    if (!isSupportedExifImage(imageFile)) {
+    if (imageFile && isSupportedExifImage(imageFile)) {
+      try {
+        const arrayBuffer = await this.app.vault.readBinary(imageFile);
+        const exifPoint = readExifGps(arrayBuffer);
+
+        if (exifPoint) {
+          point = {
+            ...exifPoint,
+            name: this.t("photoLocation", { name: imageFile.basename }),
+            address: imageFile.path,
+            source: "image-exif",
+            confidence: "gps-derived",
+          };
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    } else if (imageFile && !isSupportedExifImage(imageFile)) {
       new Notice(this.t("noticeUnsupportedImageType"));
+    }
+
+    if (!point) {
+      const metadataMatch = await findMediaSyncGps(this.app, imageContext.path);
+      if (metadataMatch) {
+        point = {
+          ...metadataMatch.point,
+          name: this.t("photoLocation", { name: metadataMatch.label }),
+          address: metadataMatch.sourcePath,
+          source: "media-sync-metadata",
+          confidence: "gps-derived",
+        };
+      }
+    }
+
+    if (!point) {
+      new Notice(this.t("noticeNoImageGps"));
       this.openManualPlaceSearch(editor);
       return;
     }
 
     try {
-      const arrayBuffer = await this.app.vault.readBinary(imageFile);
-      const point = readExifGps(arrayBuffer);
-
-      if (!point) {
-        new Notice(this.t("noticeNoImageGps"));
-        this.openManualPlaceSearch(editor);
-        return;
-      }
-
-      const photoLocation: GeoPlace = {
-        ...point,
-        name: this.t("photoLocation", { name: imageFile.basename }),
-        address: imageFile.path,
-        source: "image-exif",
-        confidence: "gps-derived",
-      };
-
       const provider = this.getNearbyProvider();
 
       if (!provider) {
         new Notice(this.t("noticeImageGpsFoundNoProvider"));
-        new PlaceListModal(this.app, [photoLocation], this.t.bind(this), async (place) => {
+        new PlaceListModal(this.app, [point], this.t.bind(this), async (place) => {
           await this.insertPlace(editor, place, this.getImageInsertTarget(imageContext));
         }).open();
         return;
@@ -221,7 +256,7 @@ export default class GeoCapturePlugin extends Plugin {
         this.settings.nearbyRadiusMeters,
       );
 
-      new PlaceListModal(this.app, [photoLocation, ...places], this.t.bind(this), async (place) => {
+      new PlaceListModal(this.app, [point, ...places], this.t.bind(this), async (place) => {
         await this.insertPlace(editor, place, this.getImageInsertTarget(imageContext));
       }).open();
     } catch (error) {
@@ -335,6 +370,10 @@ export default class GeoCapturePlugin extends Plugin {
   }
 
   private t: Translator = (key, values) => createTranslator(this.settings.uiLanguage)(key, values);
+
+  private isMobileRuntime(): boolean {
+    return Platform.isMobile;
+  }
 }
 
 type InsertTarget =

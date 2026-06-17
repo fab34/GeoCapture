@@ -17,7 +17,7 @@ export class CurrentLocationError extends Error {
 }
 
 export async function getCurrentPosition(labels?: CurrentPositionLabels): Promise<GeoPlace> {
-  if (!navigator.geolocation) {
+  if (typeof navigator === "undefined" || !navigator.geolocation) {
     return Promise.reject(new CurrentLocationError("unsupported", "Geolocation is not available in this environment."));
   }
 
