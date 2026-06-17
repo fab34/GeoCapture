@@ -19,6 +19,7 @@ It is not designed to replace a full map workspace. Its job is to help you inser
 - Parse map links or coordinates from the clipboard.
 - Read EXIF GPS from nearby local JPG/JPEG images in the current note.
 - Fall back to R2 Media Sync's local image metadata cache when the nearby image has already been rewritten to an R2 URL or the local attachment is unavailable.
+- Cache photo GPS coordinates locally after a successful image lookup so repeated suggestions keep working if the local image is later moved, removed, or not yet synced on mobile.
 - Insert photo-derived places at the current cursor or directly below the image.
 - Fall back to manual place input when image GPS metadata is missing.
 - Insert Markdown-friendly place snippets in compact, callout, table row, or custom template formats.
@@ -101,6 +102,7 @@ The location annotation remains readable even after the local image link is repl
 - Network requests are made only when the user runs search, nearby-place, or photo-location commands.
 - The optional Google Places API key is stored in local Obsidian plugin data and is only used for Google Places API requests.
 - Photo EXIF GPS is read locally; coordinates are sent to Google only when Google Places is configured and used.
+- Geo Capture stores a small local image GPS cache in its Obsidian plugin data after successful EXIF or metadata lookups. The cache contains image identifiers, coordinates, source path labels, and timestamps so repeated photo-location suggestions can work after a local attachment becomes unavailable.
 - When Cloudflare Media Sync metadata fallback is used, Geo Capture reads `.obsidian/plugins/cloudflare-media-sync/image_metadata.json` locally and does not modify it.
 
 See [docs/security/security-review.md](docs/security/security-review.md) for the current security review.

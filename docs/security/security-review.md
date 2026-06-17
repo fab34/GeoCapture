@@ -1,6 +1,6 @@
 # Geo Capture Security Review
 
-Review date: 2026-06-16
+Review date: 2026-06-17
 
 ## Summary
 
@@ -31,9 +31,13 @@ The optional Google Places API key is stored in Obsidian plugin settings data th
 
 Users should restrict their Google API key in Google Cloud where possible.
 
+Geo Capture also stores a small image GPS cache in local Obsidian plugin data after a successful EXIF or metadata lookup. The cache contains image identifiers, coordinates, source path labels, and timestamps. It does not contain image binary data or note content.
+
 ## Vault Access
 
 The plugin reads only the active note context and local image files referenced by that note when the user runs image-based commands.
+
+When resolving nearby image references, the plugin may scan vault file metadata for image filenames as a fallback on mobile. This is used to recover from Obsidian mobile link cache or sync timing issues and does not read every image's binary content.
 
 Current implementation does not:
 
