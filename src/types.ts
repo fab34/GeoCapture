@@ -25,6 +25,13 @@ export interface GeoCaptureSettings {
   nearbyRadiusMeters: number;
   template: string;
   searchLanguage: string;
+  imageGpsCache: Record<string, CachedImageGps>;
+}
+
+export interface CachedImageGps extends GeoPoint {
+  label: string;
+  sourcePath?: string;
+  updatedAt: number;
 }
 
 export interface GeoPoint {

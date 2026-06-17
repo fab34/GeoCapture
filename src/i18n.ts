@@ -73,7 +73,7 @@ const translations = {
       "Geo Capture: this image type is not supported for EXIF GPS yet. You can enter a place manually.",
     noticeNoImageGps: "Geo Capture: no GPS metadata found in this image. You can enter a place manually.",
     noticeImageLocationDiagnostics:
-      "Geo Capture diagnostics: image={image}; local={local}; exif={exif}; exifError={exifError}; vaultImages={vaultImages}; sameName={sameName}; sameStem={sameStem}; candidates={candidates}; metadata={metadata}; entries={entries}; gpsEntries={gpsEntries}; match={match}; reason={reason}",
+      "Geo Capture diagnostics: image={image}; local={local}; exif={exif}; exifError={exifError}; cache={cache}; vaultImages={vaultImages}; sameName={sameName}; sameStem={sameStem}; candidates={candidates}; metadata={metadata}; entries={entries}; gpsEntries={gpsEntries}; match={match}; reason={reason}",
     noticeImageGpsFoundNoProvider:
       "Geo Capture: image GPS found. Configure Google Places to see nearby place suggestions.",
     noticeImageGpsSearching: "Geo Capture: image GPS found. Searching nearby places...",
@@ -153,7 +153,7 @@ const translations = {
     noticeUnsupportedImageType: "Geo Capture：此圖片格式尚未支援 EXIF GPS，可改用手動輸入地點。",
     noticeNoImageGps: "Geo Capture：此圖片沒有 GPS metadata，可改用手動輸入地點。",
     noticeImageLocationDiagnostics:
-      "Geo Capture 診斷：圖片={image}；本機={local}；EXIF={exif}；EXIF錯誤={exifError}；vault圖片={vaultImages}；同名={sameName}；同主檔名={sameStem}；候選={candidates}；metadata={metadata}；條目={entries}；GPS條目={gpsEntries}；匹配={match}；原因={reason}",
+      "Geo Capture 診斷：圖片={image}；本機={local}；EXIF={exif}；EXIF錯誤={exifError}；快取={cache}；vault圖片={vaultImages}；同名={sameName}；同主檔名={sameStem}；候選={candidates}；metadata={metadata}；條目={entries}；GPS條目={gpsEntries}；匹配={match}；原因={reason}",
     noticeImageGpsFoundNoProvider: "Geo Capture：已找到圖片 GPS。設定 Google Places 後可查看附近地點建議。",
     noticeImageGpsSearching: "Geo Capture：已找到圖片 GPS，正在搜尋附近地點...",
     noticeImageMetadataFailed: "Geo Capture：無法讀取圖片 metadata，可改用手動輸入地點。",
@@ -232,7 +232,7 @@ const translations = {
     noticeUnsupportedImageType: "Geo Capture：此图片格式尚未支持 EXIF GPS，可改用手动输入地点。",
     noticeNoImageGps: "Geo Capture：此图片没有 GPS metadata，可改用手动输入地点。",
     noticeImageLocationDiagnostics:
-      "Geo Capture 诊断：图片={image}；本地={local}；EXIF={exif}；EXIF错误={exifError}；vault图片={vaultImages}；同名={sameName}；同主文件名={sameStem}；候选={candidates}；metadata={metadata}；条目={entries}；GPS条目={gpsEntries}；匹配={match}；原因={reason}",
+      "Geo Capture 诊断：图片={image}；本地={local}；EXIF={exif}；EXIF错误={exifError}；缓存={cache}；vault图片={vaultImages}；同名={sameName}；同主文件名={sameStem}；候选={candidates}；metadata={metadata}；条目={entries}；GPS条目={gpsEntries}；匹配={match}；原因={reason}",
     noticeImageGpsFoundNoProvider: "Geo Capture：已找到图片 GPS。设置 Google Places 后可查看附近地点建议。",
     noticeImageGpsSearching: "Geo Capture：已找到图片 GPS，正在搜索附近地点...",
     noticeImageMetadataFailed: "Geo Capture：无法读取图片 metadata，可改用手动输入地点。",

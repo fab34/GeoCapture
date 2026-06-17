@@ -16,7 +16,7 @@ import { GooglePlacesProvider } from "./providers/googlePlaces";
 import { NominatimProvider } from "./providers/nominatim";
 import { PlaceSearchModal } from "./searchModal";
 import { DEFAULT_SETTINGS, GeoCaptureSettingTab } from "./settings";
-import { GeoCaptureSettings, GeoPlace, NearbySearchProvider, SearchProvider } from "./types";
+import { CachedImageGps, GeoCaptureSettings, GeoPlace, GeoPoint, NearbySearchProvider, SearchProvider } from "./types";
 
 export default class GeoCapturePlugin extends Plugin {
   declare settings: GeoCaptureSettings;
@@ -228,6 +228,12 @@ export default class GeoCapturePlugin extends Plugin {
             source: "image-exif",
             confidence: "gps-derived",
           };
+          await this.rememberImageGps(imageContext, imageFile, {
+            ...exifPoint,
+            label: imageFile.basename,
+            sourcePath: imageFile.path,
+            updatedAt: Date.now(),
+          });
         }
       } catch (error) {
         console.error(error);
@@ -244,6 +250,26 @@ export default class GeoCapturePlugin extends Plugin {
           name: this.t("photoLocation", { name: metadataMatch.label }),
           address: metadataMatch.sourcePath,
           source: "media-sync-metadata",
+          confidence: "gps-derived",
+        };
+        await this.rememberImageGps(imageContext, imageFile, {
+          ...metadataMatch.point,
+          label: metadataMatch.label,
+          sourcePath: metadataMatch.sourcePath,
+          updatedAt: Date.now(),
+        });
+      }
+    }
+
+    if (!point) {
+      const cachedGps = this.findCachedImageGps(imageContext, imageFile);
+      if (cachedGps) {
+        point = {
+          lat: cachedGps.lat,
+          lon: cachedGps.lon,
+          name: this.t("photoLocation", { name: cachedGps.label }),
+          address: cachedGps.sourcePath,
+          source: "geo-capture-cache",
           confidence: "gps-derived",
         };
       }
@@ -320,9 +346,12 @@ export default class GeoCapturePlugin extends Plugin {
     }
 
     const resolutionDiagnostics = diagnoseImageResolution(this.app, imageContext.path);
+    const cachedGps = this.findCachedImageGps(imageContext, imageFile);
     const { diagnostics } = await findMediaSyncGpsWithDiagnostics(this.app, imageContext.path);
     const reason = exifStatus.startsWith("yes")
       ? "local EXIF GPS found; metadata fallback not needed"
+      : cachedGps
+        ? "Geo Capture GPS cache found; local image file not required"
       : diagnostics.reason;
 
     new Notice(
@@ -335,6 +364,7 @@ export default class GeoCapturePlugin extends Plugin {
         sameName: resolutionDiagnostics.sameName,
         sameStem: resolutionDiagnostics.sameStem,
         candidates: resolutionDiagnostics.candidates,
+        cache: cachedGps ? `yes ${cachedGps.lat.toFixed(6)},${cachedGps.lon.toFixed(6)}` : "no",
         metadata: diagnostics.metadataFound ? "yes" : "no",
         entries: diagnostics.entriesChecked,
         gpsEntries: diagnostics.entriesWithGps,
@@ -434,6 +464,80 @@ export default class GeoCapturePlugin extends Plugin {
     }
 
     return { type: "cursor" };
+  }
+
+  private findCachedImageGps(imageContext: ImageContext, imageFile: TFile | null): CachedImageGps | null {
+    const cache = this.settings.imageGpsCache ?? {};
+
+    for (const key of this.getImageCacheKeys(imageContext, imageFile)) {
+      const cached = cache[key];
+      if (cached && Number.isFinite(cached.lat) && Number.isFinite(cached.lon)) {
+        return cached;
+      }
+    }
+
+    return null;
+  }
+
+  private async rememberImageGps(
+    imageContext: ImageContext,
+    imageFile: TFile | null,
+    gps: CachedImageGps,
+  ): Promise<void> {
+    this.settings.imageGpsCache = this.settings.imageGpsCache ?? {};
+    this.pruneImageGpsCache();
+
+    for (const key of this.getImageCacheKeys(imageContext, imageFile)) {
+      this.settings.imageGpsCache[key] = gps;
+    }
+
+    await this.saveSettings();
+  }
+
+  private pruneImageGpsCache(): void {
+    const entries = Object.entries(this.settings.imageGpsCache ?? {});
+
+    if (entries.length <= 300) {
+      return;
+    }
+
+    const keep = entries
+      .sort(([, a], [, b]) => b.updatedAt - a.updatedAt)
+      .slice(0, 200);
+    this.settings.imageGpsCache = Object.fromEntries(keep);
+  }
+
+  private getImageCacheKeys(imageContext: ImageContext, imageFile: TFile | null): string[] {
+    const values = [
+      imageContext.path,
+      this.getFileName(imageContext.path),
+      this.getFileStem(this.getFileName(imageContext.path)),
+      imageFile?.path,
+      imageFile?.name,
+      imageFile?.basename,
+    ];
+
+    return [...new Set(values.map((value) => this.normalizeImageCacheKey(value)).filter(Boolean))];
+  }
+
+  private normalizeImageCacheKey(value: string | null | undefined): string {
+    if (!value) {
+      return "";
+    }
+
+    return value.trim().replace(/^<|>$/g, "").split(/[?#]/)[0].toLowerCase();
+  }
+
+  private getFileName(value: string | null | undefined): string {
+    const normalized = this.normalizeImageCacheKey(value);
+    const parts = normalized.split("/");
+    return parts[parts.length - 1] ?? "";
+  }
+
+  private getFileStem(value: string | null | undefined): string {
+    const fileName = this.getFileName(value);
+    const extensionStart = fileName.lastIndexOf(".");
+    return extensionStart > 0 ? fileName.slice(0, extensionStart) : fileName;
   }
 
   private getActiveEditor(): Editor | null {

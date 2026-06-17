@@ -22,6 +22,7 @@ export const DEFAULT_SETTINGS: GeoCaptureSettings = {
   template:
     "- [{name}]({mapsUrl})\n  - Coordinates: `{lat}, {lon}`\n  - Address: {address}",
   searchLanguage: "",
+  imageGpsCache: {},
 };
 
 export class GeoCaptureSettingTab extends PluginSettingTab {
