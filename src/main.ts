@@ -146,6 +146,8 @@ export default class GeoCapturePlugin extends Plugin {
   }
 
   private async captureNearbyPlace(editor: Editor): Promise<void> {
+    let currentLocation: GeoPlace | null = null;
+
     try {
       const provider = this.getNearbyProvider();
 
@@ -156,7 +158,7 @@ export default class GeoCapturePlugin extends Plugin {
       }
 
       new Notice(this.t("noticeGettingCurrentLocation"));
-      const currentLocation = await getCurrentPosition(this.getCurrentPositionLabels());
+      currentLocation = await getCurrentPosition(this.getCurrentPositionLabels());
 
       new Notice(this.t("noticeSearchingNearbyPlaces"));
       const places = await provider.searchNearby(
@@ -176,6 +178,9 @@ export default class GeoCapturePlugin extends Plugin {
       console.error(error);
       if (error instanceof CurrentLocationError) {
         this.showLocationError(error);
+      } else if (currentLocation) {
+        new Notice(this.t("noticeNearbySearchFallbackCurrent"));
+        await this.insertPlace(editor, currentLocation);
       } else {
         new Notice(error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeNearbyCaptureFailed"));
       }
@@ -302,13 +307,25 @@ export default class GeoCapturePlugin extends Plugin {
         this.settings.nearbyRadiusMeters,
       );
 
+      if (places.length === 0) {
+        new Notice(this.t("noticeImageNoNearbyPlaces"));
+        this.openPlaceListModal([point], (place) =>
+          this.insertPlace(editor, place, this.getImageInsertTarget(imageContext)),
+        );
+        return;
+      }
+
       this.openPlaceListModal([point, ...places], (place) =>
         this.insertPlace(editor, place, this.getImageInsertTarget(imageContext)),
       );
     } catch (error) {
       console.error(error);
-      new Notice(error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeNearbyCaptureFailed"));
-      this.openManualPlaceSearch(editor);
+      new Notice(
+        error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeNearbySearchFallbackImage"),
+      );
+      this.openPlaceListModal([point], (place) =>
+        this.insertPlace(editor, place, this.getImageInsertTarget(imageContext)),
+      );
     }
   }
 
@@ -351,15 +368,30 @@ export default class GeoCapturePlugin extends Plugin {
     const resolutionDiagnostics = diagnoseImageResolution(this.app, imageContext.path);
     const cachedGps = this.findCachedImageGps(imageContext, imageFile);
     const { diagnostics } = await findMediaSyncGpsWithDiagnostics(this.app, imageContext.path);
+    const source = exifStatus.startsWith("yes")
+      ? this.t("diagnosticSourceExif")
+      : diagnostics.matchedEntryHadGps
+        ? this.t("diagnosticSourceMetadata")
+      : cachedGps
+        ? this.t("diagnosticSourceCache")
+        : this.t("diagnosticSourceNone");
     const reason = exifStatus.startsWith("yes")
       ? "local EXIF GPS found; metadata fallback not needed"
       : cachedGps
         ? "Geo Capture GPS cache found; local image file not required"
-      : diagnostics.reason;
+        : diagnostics.reason;
+    const next = exifStatus.startsWith("yes")
+      ? this.t("diagnosticNextReady")
+      : cachedGps
+        ? this.t("diagnosticNextUseCache")
+        : diagnostics.entriesWithGps > 0 || diagnostics.metadataFound
+          ? this.t("diagnosticNextResyncImage")
+          : this.t("diagnosticNextCheckGps");
 
     new Notice(
       this.t("noticeImageLocationDiagnostics", {
         image: imageContext.path,
+        source,
         local: imageContext.file ? "yes" : "no",
         exif: exifStatus,
         exifError,
@@ -369,9 +401,7 @@ export default class GeoCapturePlugin extends Plugin {
         candidates: resolutionDiagnostics.candidates,
         cache: cachedGps ? `yes ${cachedGps.lat.toFixed(6)},${cachedGps.lon.toFixed(6)}` : "no",
         metadata: diagnostics.metadataFound ? "yes" : "no",
-        entries: diagnostics.entriesChecked,
-        gpsEntries: diagnostics.entriesWithGps,
-        match: diagnostics.matchedEntry ? "yes" : "no",
+        next,
         reason,
       }),
       12000,
@@ -379,6 +409,11 @@ export default class GeoCapturePlugin extends Plugin {
   }
 
   private async insertPlace(editor: Editor, place: GeoPlace, target?: InsertTarget): Promise<void> {
+    if (this.isDuplicatePlace(editor, place)) {
+      new Notice(this.t("noticeSkippedDuplicatePlace", { name: place.name }));
+      return;
+    }
+
     const markdown = formatPlace(place, this.settings);
     const insertTarget = target ?? { type: "cursor" };
 
@@ -390,6 +425,23 @@ export default class GeoCapturePlugin extends Plugin {
     }
 
     new Notice(this.t("noticeInsertedPlace", { name: place.name }));
+  }
+
+  private isDuplicatePlace(editor: Editor, place: GeoPlace): boolean {
+    const noteContent = editor.getValue();
+    const latPattern = place.lat.toFixed(5).replace(".", "\\.");
+    const lonPattern = place.lon.toFixed(5).replace(".", "\\.");
+    const coordinateExists = new RegExp(`${latPattern}\\d*\\s*,\\s*${lonPattern}\\d*`).test(noteContent);
+    const mapsUrlExists = place.mapsUrl ? noteContent.includes(place.mapsUrl) : false;
+    const escapedName = this.escapeRegex(place.name.trim());
+    const escapedAddress = this.escapeRegex((place.address ?? "").trim());
+    const sameNameAndAddressExists =
+      escapedName.length > 0 &&
+      escapedAddress.length > 0 &&
+      new RegExp(escapedName, "i").test(noteContent) &&
+      new RegExp(escapedAddress, "i").test(noteContent);
+
+    return coordinateExists || mapsUrlExists || sameNameAndAddressExists;
   }
 
   private insertBelowLine(editor: Editor, line: number, markdown: string): void {
@@ -556,6 +608,10 @@ export default class GeoCapturePlugin extends Plugin {
     const fileName = this.getFileName(value);
     const extensionStart = fileName.lastIndexOf(".");
     return extensionStart > 0 ? fileName.slice(0, extensionStart) : fileName;
+  }
+
+  private escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
   private getActiveEditor(): Editor | null {
