@@ -1,4 +1,11 @@
-export type InsertFormat = "compact" | "callout" | "table-row" | "template";
+export type InsertFormat =
+  | "compact"
+  | "callout"
+  | "table-row"
+  | "travel-note"
+  | "restaurant-note"
+  | "photo-caption"
+  | "template";
 
 export type MapsLinkProvider = "google" | "apple" | "openstreetmap";
 

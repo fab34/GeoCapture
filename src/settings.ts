@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS: GeoCaptureSettings = {
   googlePlacesApiKey: "",
   nearbyRadiusMeters: 500,
   template:
-    "- [{name}]({mapsUrl})\n  - Coordinates: `{lat}, {lon}`\n  - Address: {address}",
+    "- [{name}]({mapsUrl})\n  - Coordinates: `{lat}, {lon}`\n  - Address: {address}\n  - Source: {source}",
   searchLanguage: "",
   imageGpsCache: {},
 };
@@ -154,6 +154,9 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
             compact: t("formatCompact"),
             callout: t("formatCallout"),
             "table-row": t("formatTableRow"),
+            "travel-note": t("formatTravelNote"),
+            "restaurant-note": t("formatRestaurantNote"),
+            "photo-caption": t("formatPhotoCaption"),
             template: t("formatTemplate"),
           })
           .setValue(this.plugin.settings.defaultFormat)

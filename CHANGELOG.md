@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.15
+
+- Added clearer source labels to inserted place snippets, including image EXIF, R2 metadata, Geo Capture cache, current location, Google Places, OpenStreetMap, and clipboard sources.
+- Added travel-focused insert formats: travel note, restaurant note, and photo caption.
+- Added `{source}` as a custom template token.
+- Includes the typed translator cleanup introduced in 0.1.14 for the community review `@typescript-eslint/no-unsafe-argument` warning.
+
 ## 0.1.14
 
 - Replaced `this.t.bind(this)` modal arguments with an explicitly typed translator wrapper to address the community review `@typescript-eslint/no-unsafe-argument` warning.

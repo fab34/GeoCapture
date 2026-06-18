@@ -27,7 +27,7 @@ It is not designed to replace a full map workspace. Its job is to help you inser
 - Cache photo GPS coordinates locally after a successful image lookup so repeated suggestions keep working if the local image is later moved, removed, or not yet synced on mobile.
 - Insert photo-derived places at the current cursor or directly below the image.
 - Fall back to manual place input when image GPS metadata is missing.
-- Insert Markdown-friendly place snippets in compact, callout, table row, or custom template formats.
+- Insert Markdown-friendly place snippets in compact, callout, table row, travel note, restaurant note, photo caption, or custom template formats.
 - Generate Google Maps, Apple Maps, or OpenStreetMap links.
 - Support multilingual UI with system language detection and manual language override.
 
@@ -155,4 +155,7 @@ Required Obsidian release files:
 
 Published releases are available on GitHub:
 
+- [0.1.15](https://github.com/fab34/GeoCapture/releases/tag/0.1.15)
+- [0.1.14](https://github.com/fab34/GeoCapture/releases/tag/0.1.14)
+- [0.1.13](https://github.com/fab34/GeoCapture/releases/tag/0.1.13)
 - [0.1.12](https://github.com/fab34/GeoCapture/releases/tag/0.1.12)

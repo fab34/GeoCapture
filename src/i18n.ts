@@ -43,13 +43,17 @@ const translations = {
     formatCompact: "Compact line",
     formatCallout: "Callout",
     formatTableRow: "Table row",
+    formatTravelNote: "Travel note",
+    formatRestaurantNote: "Restaurant note",
+    formatPhotoCaption: "Photo caption",
     formatTemplate: "Custom template",
     settingMapsLinkProviderName: "Maps link provider",
     settingMapsLinkProviderDesc: "Used for generated map links in inserted snippets.",
     settingSearchLanguageName: "Search language",
     settingSearchLanguageDesc: "Preferred language sent to the search provider.",
     settingCustomTemplateName: "Custom template",
-    settingCustomTemplateDesc: "Available tokens: {name}, {address}, {lat}, {lon}, {mapsUrl}, {sourceUrl}.",
+    settingCustomTemplateDesc:
+      "Available tokens: {name}, {address}, {lat}, {lon}, {mapsUrl}, {sourceUrl}, {source}.",
     noticeGettingCurrentLocation: "Geo Capture: getting current location...",
     noticeRetryingCurrentLocation: "Geo Capture: high-accuracy location timed out. Retrying with lower accuracy...",
     noticeOpenEditableNote: "Geo Capture: open a Markdown note in editing mode first.",
@@ -108,6 +112,21 @@ const translations = {
     confidenceManualCoordinate: "Manual coordinates",
     confidenceManualText: "Manual text",
     confidenceMapLink: "Map link",
+    fieldAddress: "Address",
+    fieldCoordinates: "Coordinates",
+    fieldSource: "Source",
+    fieldNote: "Note",
+    fieldDishes: "Dishes",
+    fieldImpression: "Impression",
+    sourceImageExif: "Image EXIF",
+    sourceR2Metadata: "R2 metadata",
+    sourceGeoCaptureCache: "Geo Capture cache",
+    sourceCurrentLocation: "Current location",
+    sourceGooglePlaces: "Google Places",
+    sourceOpenStreetMap: "OpenStreetMap",
+    sourceClipboard: "Clipboard",
+    sourceGps: "GPS",
+    sourceManual: "Manual",
   },
   "zh-TW": {
     commandInsertCurrentLocation: "插入目前位置",
@@ -145,13 +164,16 @@ const translations = {
     formatCompact: "行內格式",
     formatCallout: "Callout",
     formatTableRow: "表格列",
+    formatTravelNote: "旅遊手帳",
+    formatRestaurantNote: "餐廳筆記",
+    formatPhotoCaption: "照片註記",
     formatTemplate: "自訂 template",
     settingMapsLinkProviderName: "地圖連結服務",
     settingMapsLinkProviderDesc: "用於產生插入片段中的地圖連結。",
     settingSearchLanguageName: "搜尋語言",
     settingSearchLanguageDesc: "傳送給地點搜尋服務的偏好語言。",
     settingCustomTemplateName: "自訂 template",
-    settingCustomTemplateDesc: "可用變數：{name}, {address}, {lat}, {lon}, {mapsUrl}, {sourceUrl}。",
+    settingCustomTemplateDesc: "可用變數：{name}, {address}, {lat}, {lon}, {mapsUrl}, {sourceUrl}, {source}。",
     noticeGettingCurrentLocation: "Geo Capture：正在取得目前位置...",
     noticeRetryingCurrentLocation: "Geo Capture：高精度定位逾時，正在改用較低精度重試...",
     noticeOpenEditableNote: "Geo Capture：請先開啟 Markdown 筆記並進入編輯模式。",
@@ -201,6 +223,21 @@ const translations = {
     confidenceManualCoordinate: "手動座標",
     confidenceManualText: "手動文字",
     confidenceMapLink: "地圖連結",
+    fieldAddress: "地址",
+    fieldCoordinates: "座標",
+    fieldSource: "來源",
+    fieldNote: "筆記",
+    fieldDishes: "餐點",
+    fieldImpression: "心得",
+    sourceImageExif: "圖片 EXIF",
+    sourceR2Metadata: "R2 metadata",
+    sourceGeoCaptureCache: "Geo Capture 快取",
+    sourceCurrentLocation: "目前位置",
+    sourceGooglePlaces: "Google Places",
+    sourceOpenStreetMap: "OpenStreetMap",
+    sourceClipboard: "剪貼簿",
+    sourceGps: "GPS",
+    sourceManual: "手動",
   },
   "zh-CN": {
     commandInsertCurrentLocation: "插入当前位置",
@@ -238,13 +275,16 @@ const translations = {
     formatCompact: "行内格式",
     formatCallout: "Callout",
     formatTableRow: "表格行",
+    formatTravelNote: "旅行手帐",
+    formatRestaurantNote: "餐厅笔记",
+    formatPhotoCaption: "照片注记",
     formatTemplate: "自定义 template",
     settingMapsLinkProviderName: "地图链接服务",
     settingMapsLinkProviderDesc: "用于生成插入片段中的地图链接。",
     settingSearchLanguageName: "搜索语言",
     settingSearchLanguageDesc: "发送给地点搜索服务的偏好语言。",
     settingCustomTemplateName: "自定义 template",
-    settingCustomTemplateDesc: "可用变量：{name}, {address}, {lat}, {lon}, {mapsUrl}, {sourceUrl}。",
+    settingCustomTemplateDesc: "可用变量：{name}, {address}, {lat}, {lon}, {mapsUrl}, {sourceUrl}, {source}。",
     noticeGettingCurrentLocation: "Geo Capture：正在获取当前位置...",
     noticeRetryingCurrentLocation: "Geo Capture：高精度定位超时，正在改用较低精度重试...",
     noticeOpenEditableNote: "Geo Capture：请先打开 Markdown 笔记并进入编辑模式。",
@@ -294,6 +334,21 @@ const translations = {
     confidenceManualCoordinate: "手动坐标",
     confidenceManualText: "手动文字",
     confidenceMapLink: "地图链接",
+    fieldAddress: "地址",
+    fieldCoordinates: "坐标",
+    fieldSource: "来源",
+    fieldNote: "笔记",
+    fieldDishes: "餐点",
+    fieldImpression: "心得",
+    sourceImageExif: "图片 EXIF",
+    sourceR2Metadata: "R2 metadata",
+    sourceGeoCaptureCache: "Geo Capture 缓存",
+    sourceCurrentLocation: "当前位置",
+    sourceGooglePlaces: "Google Places",
+    sourceOpenStreetMap: "OpenStreetMap",
+    sourceClipboard: "剪贴板",
+    sourceGps: "GPS",
+    sourceManual: "手动",
   },
 } satisfies Record<LocaleCode, Record<string, string>>;
 
@@ -330,6 +385,38 @@ export function getProviderLanguage(language: UiLanguage, fallback: string): str
 
 export function translateConfidence(t: Translator, confidence: LocationConfidence): string {
   return t(confidenceKeys[confidence]);
+}
+
+export function translatePlaceSource(t: Translator, source: string | undefined): string {
+  if (source === "image-exif") {
+    return t("sourceImageExif");
+  }
+
+  if (source === "media-sync-metadata") {
+    return t("sourceR2Metadata");
+  }
+
+  if (source === "geo-capture-cache") {
+    return t("sourceGeoCaptureCache");
+  }
+
+  if (source === "device") {
+    return t("sourceCurrentLocation");
+  }
+
+  if (source === "google-places") {
+    return t("sourceGooglePlaces");
+  }
+
+  if (source === "nominatim") {
+    return t("sourceOpenStreetMap");
+  }
+
+  if (source === "clipboard") {
+    return t("sourceClipboard");
+  }
+
+  return t("sourceManual");
 }
 
 function normalizeLocale(language: string): LocaleCode {

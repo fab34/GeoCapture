@@ -1,5 +1,5 @@
 import { App, SuggestModal } from "obsidian";
-import { translateConfidence, Translator } from "./i18n";
+import { translateConfidence, translatePlaceSource, Translator } from "./i18n";
 import { GeoPlace } from "./types";
 
 export class PlaceListModal extends SuggestModal<GeoPlace> {
@@ -52,6 +52,10 @@ export function formatSubtitle(place: GeoPlace, t: Translator): string {
 
   if (place.confidence) {
     parts.push(translateConfidence(t, place.confidence));
+  }
+
+  if (place.source) {
+    parts.push(translatePlaceSource(t, place.source));
   }
 
   return parts.join(" · ") || `${place.lat}, ${place.lon}`;
