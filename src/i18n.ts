@@ -78,6 +78,9 @@ const translations = {
     noticeImageGpsSearching: "Geo Capture: image GPS found. Searching nearby places...",
     noticeImageMetadataFailed: "Geo Capture: unable to read image metadata. You can enter a place manually.",
     noticePlaceSearchFailed: "Geo Capture: place search failed.",
+    noticePlaceSearchNoResults: "Geo Capture: no matching places found.",
+    noticePlaceSearchTypeMore:
+      "Geo Capture: type at least 2 characters, or paste a map link or coordinates.",
     noticeInsertedPlace: "Geo Capture: inserted {name}.",
     noticeSkippedDuplicatePlace: "Geo Capture: skipped duplicate place {name}. It already appears in this note.",
     noticeNearbySearchFallbackCurrent:
@@ -172,6 +175,8 @@ const translations = {
     noticeImageGpsSearching: "Geo Capture：已找到圖片 GPS，正在搜尋附近地點...",
     noticeImageMetadataFailed: "Geo Capture：無法讀取圖片 metadata，可改用手動輸入地點。",
     noticePlaceSearchFailed: "Geo Capture：地點搜尋失敗。",
+    noticePlaceSearchNoResults: "Geo Capture：找不到符合的地點。",
+    noticePlaceSearchTypeMore: "Geo Capture：請至少輸入 2 個字，或直接貼上地圖連結與座標。",
     noticeInsertedPlace: "Geo Capture：已插入 {name}。",
     noticeSkippedDuplicatePlace: "Geo Capture：已略過重複地點 {name}，這份筆記裡已經有相同內容。",
     noticeNearbySearchFallbackCurrent: "Geo Capture：附近地點搜尋失敗，改為插入原始目前位置。",
@@ -263,6 +268,8 @@ const translations = {
     noticeImageGpsSearching: "Geo Capture：已找到图片 GPS，正在搜索附近地点...",
     noticeImageMetadataFailed: "Geo Capture：无法读取图片 metadata，可改用手动输入地点。",
     noticePlaceSearchFailed: "Geo Capture：地点搜索失败。",
+    noticePlaceSearchNoResults: "Geo Capture：找不到符合的地点。",
+    noticePlaceSearchTypeMore: "Geo Capture：请至少输入 2 个字，或直接粘贴地图链接与坐标。",
     noticeInsertedPlace: "Geo Capture：已插入 {name}。",
     noticeSkippedDuplicatePlace: "Geo Capture：已跳过重复地点 {name}，这篇笔记里已经有相同内容。",
     noticeNearbySearchFallbackCurrent: "Geo Capture：附近地点搜索失败，改为插入原始当前位置。",

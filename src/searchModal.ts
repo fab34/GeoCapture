@@ -30,6 +30,11 @@ export class PlaceSearchModal extends SuggestModal<GeoPlace> {
   async getSuggestions(query: string): Promise<GeoPlace[]> {
     const trimmed = query.trim();
     if (trimmed.length < 2) {
+      const parsedPlace = parseMapText(trimmed);
+      if (parsedPlace) {
+        this.places = [parsedPlace];
+        return this.places;
+      }
       return [];
     }
 
@@ -61,5 +66,20 @@ export class PlaceSearchModal extends SuggestModal<GeoPlace> {
 
   onChooseSuggestion(place: GeoPlace): void {
     this.onChoose(place);
+  }
+
+  onNoSuggestion(): void {
+    const trimmed = this.inputEl.value.trim();
+
+    if (!trimmed) {
+      return;
+    }
+
+    if (trimmed.length < 2 && !parseMapText(trimmed)) {
+      new Notice(this.t("noticePlaceSearchTypeMore"));
+      return;
+    }
+
+    new Notice(this.t("noticePlaceSearchNoResults"));
   }
 }
