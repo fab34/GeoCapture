@@ -9,7 +9,7 @@ const translations = {
   en: {
     commandInsertCurrentLocation: "Insert current location",
     commandCaptureNearbyPlace: "Capture nearby place",
-    commandQuickInsertPlace: "Quick insert place",
+    commandQuickInsertPlace: "Search place and insert",
     commandSuggestPlaceFromImage: "Suggest place from nearest image",
     commandDiagnoseImageLocation: "Diagnose nearest image location",
     commandInsertLocationFromClipboard: "Insert location from clipboard",
@@ -112,7 +112,7 @@ const translations = {
   "zh-TW": {
     commandInsertCurrentLocation: "插入目前位置",
     commandCaptureNearbyPlace: "擷取附近地點",
-    commandQuickInsertPlace: "快速插入地點",
+    commandQuickInsertPlace: "搜尋地點並插入",
     commandSuggestPlaceFromImage: "從附近圖片建議地點",
     commandDiagnoseImageLocation: "診斷附近圖片定位",
     commandInsertLocationFromClipboard: "從剪貼簿插入位置",
@@ -205,7 +205,7 @@ const translations = {
   "zh-CN": {
     commandInsertCurrentLocation: "插入当前位置",
     commandCaptureNearbyPlace: "捕捉附近地点",
-    commandQuickInsertPlace: "快速插入地点",
+    commandQuickInsertPlace: "搜索地点并插入",
     commandSuggestPlaceFromImage: "从附近图片建议地点",
     commandDiagnoseImageLocation: "诊断附近图片定位",
     commandInsertLocationFromClipboard: "从剪贴板插入位置",

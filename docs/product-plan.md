@@ -16,7 +16,7 @@ The MVP should not try to replace Map View. It should be closer to a capture com
 ## MVP Commands
 
 - Insert current location
-- Quick insert place from name, coordinates, or map link
+- Search place and insert from name, coordinates, or map link
 - Insert location from clipboard
 
 ## Insert Formats

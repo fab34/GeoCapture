@@ -33,7 +33,7 @@ It is not designed to replace a full map workspace. Its job is to help you inser
 
 ## Commands
 
-- `Geo Capture: Quick insert place`
+- `Geo Capture: Search place and insert`
   Search by place name, paste a map link, or type coordinates.
 
 - `Geo Capture: Capture nearby place`

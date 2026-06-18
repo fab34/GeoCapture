@@ -45,7 +45,7 @@ Required files in that folder:
 
 ### Quick Insert Place
 
-- Run `Geo Capture: Quick insert place`.
+- Run `Geo Capture: Search place and insert`.
 - Search a known place name.
 - Select a candidate.
 - Confirm a Markdown location snippet is inserted at the cursor.
