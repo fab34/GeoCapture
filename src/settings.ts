@@ -5,6 +5,7 @@ import { GooglePlacesProvider } from "./providers/googlePlaces";
 import {
   GeoCaptureSettings,
   ImageInsertPosition,
+  ImagePromptPosition,
   InsertFormat,
   MapsLinkProvider,
   PlaceProviderKind,
@@ -14,6 +15,10 @@ import {
 export const DEFAULT_SETTINGS: GeoCaptureSettings = {
   uiLanguage: "system",
   imageInsertPosition: "cursor",
+  enableImageLocationPrompts: true,
+  imagePromptPosition: "below-image",
+  autoDetectImageExif: true,
+  autoDetectMediaSyncMetadata: true,
   defaultFormat: "callout",
   mapsLinkProvider: "google",
   placeProvider: "nominatim",
@@ -71,6 +76,52 @@ export class GeoCaptureSettingTab extends PluginSettingTab {
             this.plugin.settings.imageInsertPosition = value as ImageInsertPosition;
             await this.plugin.saveSettings();
           }),
+      );
+
+    new Setting(containerEl)
+      .setName(t("settingEnableImageLocationPromptsName"))
+      .setDesc(t("settingEnableImageLocationPromptsDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.enableImageLocationPrompts).onChange(async (value) => {
+          this.plugin.settings.enableImageLocationPrompts = value;
+          await this.plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName(t("settingImagePromptPositionName"))
+      .setDesc(t("settingImagePromptPositionDesc"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({
+            "below-image": t("imagePromptBelowImage"),
+            inline: t("imagePromptInline"),
+          })
+          .setValue(this.plugin.settings.imagePromptPosition)
+          .onChange(async (value) => {
+            this.plugin.settings.imagePromptPosition = value as ImagePromptPosition;
+            await this.plugin.saveSettings();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName(t("settingAutoDetectImageExifName"))
+      .setDesc(t("settingAutoDetectImageExifDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.autoDetectImageExif).onChange(async (value) => {
+          this.plugin.settings.autoDetectImageExif = value;
+          await this.plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName(t("settingAutoDetectMediaSyncMetadataName"))
+      .setDesc(t("settingAutoDetectMediaSyncMetadataDesc"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.autoDetectMediaSyncMetadata).onChange(async (value) => {
+          this.plugin.settings.autoDetectMediaSyncMetadata = value;
+          await this.plugin.saveSettings();
+        }),
       );
 
     new Setting(containerEl)

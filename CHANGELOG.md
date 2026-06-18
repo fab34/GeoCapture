@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- Added optional image location prompts in reading view. When a preview image has usable GPS from local EXIF, R2 metadata, or Geo Capture cache, Geo Capture can show an Add place button near the image.
+- Added settings for image location prompts, prompt position, local EXIF detection, and R2 metadata detection.
+- Reused the existing photo GPS workflow so prompt-based insertion keeps Google Places nearby suggestions, raw GPS fallback, source labels, and duplicate-place protection.
+
 ## 0.1.15
 
 - Added clearer source labels to inserted place snippets, including image EXIF, R2 metadata, Geo Capture cache, current location, Google Places, OpenStreetMap, and clipboard sources.

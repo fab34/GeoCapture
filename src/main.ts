@@ -1,10 +1,11 @@
-import { Editor, MarkdownView, Notice, Platform, Plugin, TFile } from "obsidian";
+import { Editor, MarkdownPostProcessorContext, MarkdownView, Notice, Platform, Plugin, TFile } from "obsidian";
 import { readPlaceFromClipboard } from "./clipboard";
 import { readExifGps } from "./exif";
 import { formatPlace } from "./format";
 import {
   ImageContext,
   diagnoseImageResolution,
+  findImageContextByPath,
   findNearestImageContext,
   isSupportedExifImage,
 } from "./images";
@@ -36,6 +37,7 @@ export default class GeoCapturePlugin extends Plugin {
 
     try {
       this.registerCommands();
+      this.registerImageLocationPrompts();
       this.addSettingTab(new GeoCaptureSettingTab(this.app, this));
     } catch (error) {
       console.error("Geo Capture: failed to finish plugin startup.", error);
@@ -220,68 +222,7 @@ export default class GeoCapturePlugin extends Plugin {
       return;
     }
 
-    const imageFile = imageContext.file;
-    let point: GeoPlace | null = null;
-
-    if (imageFile && isSupportedExifImage(imageFile)) {
-      try {
-        const arrayBuffer = await this.app.vault.readBinary(imageFile);
-        const exifPoint = readExifGps(arrayBuffer);
-
-        if (exifPoint) {
-          point = {
-            ...exifPoint,
-            name: this.t("photoLocation", { name: imageFile.basename }),
-            address: imageFile.path,
-            source: "image-exif",
-            confidence: "gps-derived",
-          };
-          await this.rememberImageGps(imageContext, imageFile, {
-            ...exifPoint,
-            label: imageFile.basename,
-            sourcePath: imageFile.path,
-            updatedAt: Date.now(),
-          });
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    } else if (imageFile && !isSupportedExifImage(imageFile)) {
-      new Notice(this.t("noticeUnsupportedImageType"));
-    }
-
-    if (!point) {
-      const metadataMatch = await findMediaSyncGps(this.app, imageContext.path);
-      if (metadataMatch) {
-        point = {
-          ...metadataMatch.point,
-          name: this.t("photoLocation", { name: metadataMatch.label }),
-          address: metadataMatch.sourcePath,
-          source: "media-sync-metadata",
-          confidence: "gps-derived",
-        };
-        await this.rememberImageGps(imageContext, imageFile, {
-          ...metadataMatch.point,
-          label: metadataMatch.label,
-          sourcePath: metadataMatch.sourcePath,
-          updatedAt: Date.now(),
-        });
-      }
-    }
-
-    if (!point) {
-      const cachedGps = this.findCachedImageGps(imageContext, imageFile);
-      if (cachedGps) {
-        point = {
-          lat: cachedGps.lat,
-          lon: cachedGps.lon,
-          name: this.t("photoLocation", { name: cachedGps.label }),
-          address: cachedGps.sourcePath,
-          source: "geo-capture-cache",
-          confidence: "gps-derived",
-        };
-      }
-    }
+    const point = await this.resolveImageGps(imageContext, { showUnsupportedNotice: true });
 
     if (!point) {
       new Notice(this.t("noticeNoImageGps"));
@@ -327,6 +268,234 @@ export default class GeoCapturePlugin extends Plugin {
         this.insertPlace(editor, place, this.getImageInsertTarget(imageContext)),
       );
     }
+  }
+
+  private registerImageLocationPrompts(): void {
+    this.registerMarkdownPostProcessor((el, ctx) => {
+      void this.renderImageLocationPrompts(el, ctx);
+    });
+  }
+
+  private async renderImageLocationPrompts(el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> {
+    if (!this.settings.enableImageLocationPrompts) {
+      return;
+    }
+
+    const sourceFile = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+    if (!(sourceFile instanceof TFile)) {
+      return;
+    }
+
+    const images = Array.from(el.querySelectorAll("img")).filter(
+      (image) => !image.closest(".geo-capture-image-prompt"),
+    );
+    if (images.length === 0) {
+      return;
+    }
+
+    let content: string;
+    try {
+      content = await this.app.vault.read(sourceFile);
+    } catch (error) {
+      console.error("Geo Capture: unable to read source note for image prompts.", error);
+      return;
+    }
+
+    for (const image of images) {
+      await this.renderPromptForImage(image, sourceFile, content);
+    }
+  }
+
+  private async renderPromptForImage(image: HTMLImageElement, sourceFile: TFile, content: string): Promise<void> {
+    if (image.dataset.geoCapturePrompt === "checked") {
+      return;
+    }
+    image.dataset.geoCapturePrompt = "checked";
+
+    const imageTarget = this.getImageTargetFromElement(image);
+    if (!imageTarget) {
+      return;
+    }
+
+    const imageContext = findImageContextByPath(this.app, sourceFile, content, imageTarget);
+    if (!imageContext) {
+      return;
+    }
+
+    const prompt = this.createImagePromptElement(this.t("imagePromptSearching"), true);
+    this.placeImagePromptElement(image, prompt);
+
+    const point = await this.resolveImageGps(imageContext, { showUnsupportedNotice: false });
+    if (!point) {
+      prompt.remove();
+      return;
+    }
+
+    const button = prompt.querySelector("button");
+    const status = prompt.querySelector(".geo-capture-image-prompt-status");
+    if (!(button instanceof HTMLButtonElement) || !(status instanceof HTMLElement)) {
+      prompt.remove();
+      return;
+    }
+
+    button.disabled = false;
+    button.textContent = this.hasPlaceNearImage(content, imageContext, point)
+      ? this.t("imagePromptUpdatePlace")
+      : this.t("imagePromptAddPlace");
+    status.textContent = this.t("imagePromptGpsReady");
+    button.addEventListener("click", () => {
+      void this.openImagePromptPlaces(sourceFile, imageContext, point);
+    });
+  }
+
+  private createImagePromptElement(label: string, disabled: boolean): HTMLElement {
+    const prompt = document.createElement("div");
+    prompt.className = `geo-capture-image-prompt geo-capture-image-prompt-${this.settings.imagePromptPosition}`;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "geo-capture-image-prompt-button";
+    button.disabled = disabled;
+    button.textContent = label;
+
+    const status = document.createElement("span");
+    status.className = "geo-capture-image-prompt-status";
+    status.textContent = disabled ? "" : this.t("imagePromptGpsReady");
+
+    prompt.append(button, status);
+    return prompt;
+  }
+
+  private placeImagePromptElement(image: HTMLImageElement, prompt: HTMLElement): void {
+    if (this.settings.imagePromptPosition === "inline") {
+      image.insertAdjacentElement("afterend", prompt);
+      return;
+    }
+
+    const parent = image.parentElement;
+    if (parent && parent.childElementCount === 1) {
+      parent.insertAdjacentElement("afterend", prompt);
+      return;
+    }
+
+    image.insertAdjacentElement("afterend", prompt);
+  }
+
+  private getImageTargetFromElement(image: HTMLImageElement): string | null {
+    const alt = image.getAttribute("alt")?.trim();
+    if (alt && /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(alt)) {
+      return alt;
+    }
+
+    const src = image.getAttribute("src")?.trim();
+    if (!src) {
+      return null;
+    }
+
+    try {
+      const url = new URL(src);
+      return decodeURIComponent(url.pathname.split("/").pop() ?? src);
+    } catch {
+      return decodeURIComponent(src.split(/[?#]/)[0].split("/").pop() ?? src);
+    }
+  }
+
+  private async openImagePromptPlaces(sourceFile: TFile, imageContext: ImageContext, point: GeoPlace): Promise<void> {
+    try {
+      const provider = this.getNearbyProvider();
+
+      if (!provider) {
+        new Notice(this.t("noticeImageGpsFoundNoProvider"));
+        this.openPlaceListModal([point], (place) => this.insertPlaceIntoFile(sourceFile, place, imageContext));
+        return;
+      }
+
+      new Notice(this.t("noticeImageGpsSearching"));
+      const places = await provider.searchNearby(point, this.getSearchLanguage(), this.settings.nearbyRadiusMeters);
+
+      if (places.length === 0) {
+        new Notice(this.t("noticeImageNoNearbyPlaces"));
+        this.openPlaceListModal([point], (place) => this.insertPlaceIntoFile(sourceFile, place, imageContext));
+        return;
+      }
+
+      this.openPlaceListModal([point, ...places], (place) => this.insertPlaceIntoFile(sourceFile, place, imageContext));
+    } catch (error) {
+      console.error(error);
+      new Notice(
+        error instanceof Error ? `Geo Capture: ${error.message}` : this.t("noticeNearbySearchFallbackImage"),
+      );
+      this.openPlaceListModal([point], (place) => this.insertPlaceIntoFile(sourceFile, place, imageContext));
+    }
+  }
+
+  private async resolveImageGps(
+    imageContext: ImageContext,
+    options: { showUnsupportedNotice: boolean },
+  ): Promise<GeoPlace | null> {
+    const imageFile = imageContext.file;
+
+    if (this.settings.autoDetectImageExif && imageFile && isSupportedExifImage(imageFile)) {
+      try {
+        const arrayBuffer = await this.app.vault.readBinary(imageFile);
+        const exifPoint = readExifGps(arrayBuffer);
+
+        if (exifPoint) {
+          await this.rememberImageGps(imageContext, imageFile, {
+            ...exifPoint,
+            label: imageFile.basename,
+            sourcePath: imageFile.path,
+            updatedAt: Date.now(),
+          });
+
+          return {
+            ...exifPoint,
+            name: this.t("photoLocation", { name: imageFile.basename }),
+            address: imageFile.path,
+            source: "image-exif",
+            confidence: "gps-derived",
+          };
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    } else if (options.showUnsupportedNotice && imageFile && !isSupportedExifImage(imageFile)) {
+      new Notice(this.t("noticeUnsupportedImageType"));
+    }
+
+    if (this.settings.autoDetectMediaSyncMetadata) {
+      const metadataMatch = await findMediaSyncGps(this.app, imageContext.path);
+      if (metadataMatch) {
+        await this.rememberImageGps(imageContext, imageFile, {
+          ...metadataMatch.point,
+          label: metadataMatch.label,
+          sourcePath: metadataMatch.sourcePath,
+          updatedAt: Date.now(),
+        });
+
+        return {
+          ...metadataMatch.point,
+          name: this.t("photoLocation", { name: metadataMatch.label }),
+          address: metadataMatch.sourcePath,
+          source: "media-sync-metadata",
+          confidence: "gps-derived",
+        };
+      }
+    }
+
+    const cachedGps = this.findCachedImageGps(imageContext, imageFile);
+    if (cachedGps) {
+      return {
+        lat: cachedGps.lat,
+        lon: cachedGps.lon,
+        name: this.t("photoLocation", { name: cachedGps.label }),
+        address: cachedGps.sourcePath,
+        source: "geo-capture-cache",
+        confidence: "gps-derived",
+      };
+    }
+
+    return null;
   }
 
   private async diagnoseNearestImageLocation(editor: Editor): Promise<void> {
@@ -427,8 +596,34 @@ export default class GeoCapturePlugin extends Plugin {
     new Notice(this.t("noticeInsertedPlace", { name: place.name }));
   }
 
+  private async insertPlaceIntoFile(file: TFile, place: GeoPlace, imageContext: ImageContext): Promise<void> {
+    let inserted = false;
+
+    try {
+      await this.app.vault.process(file, (content) => {
+        if (this.isDuplicatePlaceInContent(content, place)) {
+          new Notice(this.t("noticeSkippedDuplicatePlace", { name: place.name }));
+          return content;
+        }
+
+        inserted = true;
+        return this.insertBelowLineInContent(content, imageContext.line, formatPlace(place, this.settings));
+      });
+
+      if (inserted) {
+        new Notice(this.t("noticeInsertedPlace", { name: place.name }));
+      }
+    } catch (error) {
+      console.error(error);
+      new Notice(this.t("noticeImagePromptInsertFailed"));
+    }
+  }
+
   private isDuplicatePlace(editor: Editor, place: GeoPlace): boolean {
-    const noteContent = editor.getValue();
+    return this.isDuplicatePlaceInContent(editor.getValue(), place);
+  }
+
+  private isDuplicatePlaceInContent(noteContent: string, place: GeoPlace): boolean {
     const latPattern = place.lat.toFixed(5).replace(".", "\\.");
     const lonPattern = place.lon.toFixed(5).replace(".", "\\.");
     const coordinateExists = new RegExp(`${latPattern}\\d*\\s*,\\s*${lonPattern}\\d*`).test(noteContent);
@@ -444,11 +639,24 @@ export default class GeoCapturePlugin extends Plugin {
     return coordinateExists || mapsUrlExists || sameNameAndAddressExists;
   }
 
+  private hasPlaceNearImage(content: string, imageContext: ImageContext, place: GeoPlace): boolean {
+    const lines = content.split(/\r?\n/);
+    const nearby = lines.slice(imageContext.line + 1, imageContext.line + 7).join("\n");
+    return this.isDuplicatePlaceInContent(nearby, place);
+  }
+
   private insertBelowLine(editor: Editor, line: number, markdown: string): void {
     const insertLine = Math.min(line + 1, editor.lineCount());
     const insertText = `\n${markdown}\n`;
     editor.replaceRange(insertText, { line: insertLine, ch: 0 });
     editor.setCursor({ line: insertLine + markdown.split("\n").length, ch: 0 });
+  }
+
+  private insertBelowLineInContent(content: string, line: number, markdown: string): string {
+    const lines = content.split(/\r?\n/);
+    const insertLine = Math.min(line + 1, lines.length);
+    lines.splice(insertLine, 0, "", markdown);
+    return lines.join("\n");
   }
 
   private ensureTrailingNewline(editor: Editor): void {

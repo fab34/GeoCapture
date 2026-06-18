@@ -26,6 +26,7 @@ It is not designed to replace a full map workspace. Its job is to help you inser
 - Fall back to R2 Media Sync's local image metadata cache when the nearby image has already been rewritten to an R2 URL or the local attachment is unavailable.
 - Cache photo GPS coordinates locally after a successful image lookup so repeated suggestions keep working if the local image is later moved, removed, or not yet synced on mobile.
 - Insert photo-derived places at the current cursor or directly below the image.
+- Show optional image location prompts in reading view when a preview image has GPS from local EXIF, R2 metadata, or Geo Capture cache.
 - Fall back to manual place input when image GPS metadata is missing.
 - Insert Markdown-friendly place snippets in compact, callout, table row, travel note, restaurant note, photo caption, or custom template formats.
 - Generate Google Maps, Apple Maps, or OpenStreetMap links.
@@ -155,6 +156,7 @@ Required Obsidian release files:
 
 Published releases are available on GitHub:
 
+- [0.2.0](https://github.com/fab34/GeoCapture/releases/tag/0.2.0)
 - [0.1.15](https://github.com/fab34/GeoCapture/releases/tag/0.1.15)
 - [0.1.14](https://github.com/fab34/GeoCapture/releases/tag/0.1.14)
 - [0.1.13](https://github.com/fab34/GeoCapture/releases/tag/0.1.13)

@@ -49,6 +49,37 @@ export function findNearestImageContext(app: App, editor: Editor, sourceFile: TF
   return null;
 }
 
+export function findImageContextByPath(
+  app: App,
+  sourceFile: TFile,
+  content: string,
+  imageTarget: string,
+): ImageContext | null {
+  const target = normalizeComparableImagePath(imageTarget);
+  const targetFileName = getFileName(target);
+  const targetStem = targetFileName ? getFileStem(targetFileName) : "";
+
+  for (const match of findImageMatchesInContent(content)) {
+    const matchPath = normalizeComparableImagePath(match.path);
+    const matchFileName = getFileName(matchPath);
+    const matchStem = matchFileName ? getFileStem(matchFileName) : "";
+    const isMatch =
+      matchPath === target ||
+      (targetFileName !== null && matchFileName !== null && matchFileName.toLowerCase() === targetFileName.toLowerCase()) ||
+      (targetStem.length > 0 && matchStem.toLowerCase() === targetStem.toLowerCase());
+
+    if (isMatch) {
+      return {
+        file: resolveImageFile(app, sourceFile, match.path),
+        line: match.line,
+        path: match.path,
+      };
+    }
+  }
+
+  return null;
+}
+
 export function isSupportedExifImage(file: TFile): boolean {
   return SUPPORTED_IMAGE_EXTENSIONS.has(file.extension.toLowerCase());
 }
@@ -83,6 +114,18 @@ function findImageMatches(editor: Editor): ImageMatch[] {
     const text = editor.getLine(line);
     matches.push(...findLineMatches(text, line, WIKI_IMAGE));
     matches.push(...findLineMatches(text, line, MARKDOWN_IMAGE));
+  }
+
+  return matches;
+}
+
+function findImageMatchesInContent(content: string): ImageMatch[] {
+  const matches: ImageMatch[] = [];
+  const lines = content.split(/\r?\n/);
+
+  for (let line = 0; line < lines.length; line += 1) {
+    matches.push(...findLineMatches(lines[line], line, WIKI_IMAGE));
+    matches.push(...findLineMatches(lines[line], line, MARKDOWN_IMAGE));
   }
 
   return matches;
@@ -133,6 +176,11 @@ function cleanImagePath(path: string | undefined): string | null {
   } catch {
     return trimmed;
   }
+}
+
+function normalizeComparableImagePath(path: string): string {
+  const cleaned = cleanImagePath(path) ?? path;
+  return normalizePath(cleaned.split(/[?#]/)[0]).toLowerCase();
 }
 
 function findImageFileByName(app: App, imagePath: string): TFile | null {
