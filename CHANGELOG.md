@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.14
+
+- Replaced `this.t.bind(this)` modal arguments with an explicitly typed translator wrapper to address the community review `@typescript-eslint/no-unsafe-argument` warning.
+
 ## 0.1.13
 
 - Made image-location diagnostics easier to read by highlighting the active source (`EXIF`, `R2 metadata`, or `Geo Capture cache`) and the next recovery step.

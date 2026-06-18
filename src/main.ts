@@ -480,7 +480,7 @@ export default class GeoCapturePlugin extends Plugin {
       this.app,
       this.getSearchProvider(),
       this.getSearchLanguage(),
-      this.t.bind(this),
+      this.getTranslator(),
       (place) => {
         void this.insertPlace(editor, place);
       },
@@ -491,9 +491,13 @@ export default class GeoCapturePlugin extends Plugin {
     places: GeoPlace[],
     onChoose: (place: GeoPlace) => Promise<void>,
   ): void {
-    new PlaceListModal(this.app, places, this.t.bind(this), (place) => {
+    new PlaceListModal(this.app, places, this.getTranslator(), (place) => {
       void onChoose(place);
     }).open();
+  }
+
+  private getTranslator(): Translator {
+    return (key, values) => this.t(key, values);
   }
 
   private getCurrentPositionLabels(): Parameters<typeof getCurrentPosition>[0] {

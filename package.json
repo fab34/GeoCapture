@@ -1,6 +1,6 @@
 {
   "name": "geo-capture",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Fast location capture for travel journals, place notes, and trip logs.",
   "main": "main.js",
   "scripts": {
